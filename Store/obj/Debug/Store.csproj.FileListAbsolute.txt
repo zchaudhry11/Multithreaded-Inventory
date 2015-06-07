@@ -1,0 +1,11 @@
+c:\users\zia\documents\visual studio 2013\Projects\Store\Store\bin\Debug\Store.exe.config
+c:\users\zia\documents\visual studio 2013\Projects\Store\Store\bin\Debug\Store.exe
+c:\users\zia\documents\visual studio 2013\Projects\Store\Store\bin\Debug\Store.pdb
+c:\users\zia\documents\visual studio 2013\Projects\Store\Store\obj\Debug\Store.Properties.Resources.resources
+c:\users\zia\documents\visual studio 2013\Projects\Store\Store\obj\Debug\Store.csproj.GenerateResource.Cache
+c:\users\zia\documents\visual studio 2013\Projects\Store\Store\obj\Debug\Store.exe
+c:\users\zia\documents\visual studio 2013\Projects\Store\Store\obj\Debug\Store.pdb
+C:\Users\Zia\Documents\Visual Studio 2013\Projects\Store\Store\obj\Debug\Store.csprojResolveAssemblyReference.cache
+C:\Users\Zia\Documents\Visual Studio 2013\Projects\Store\Store\obj\Debug\Store.AddItemForm.resources
+C:\Users\Zia\documents\visual studio 2013\Projects\Store\Store\obj\Debug\Store.Main.resources
+C:\Users\Zia\documents\visual studio 2013\Projects\Store\Store\obj\Debug\Store.AddOrderForm.resources
