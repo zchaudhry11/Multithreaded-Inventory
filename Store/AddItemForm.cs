@@ -28,6 +28,7 @@ namespace Store
             //Create item to be added in list
             Item temp = new Item(nameBox.Text, descBox.Text, Convert.ToSingle(costBox.Text), stockCheckBox.Checked, Convert.ToInt32(quantityBox.Text));
             Storefront.AddItem(temp);
+            Main.UpdateStorefront();
             this.Close();
         }
     }

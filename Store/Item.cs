@@ -58,6 +58,11 @@ namespace Store
             return _itemName;
         }
 
+        public string GetDesc()
+        {
+            return _itemDesc;
+        }
+
         public float GetPrice()
         {
             return _itemCost;
