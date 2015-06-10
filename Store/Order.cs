@@ -12,13 +12,17 @@ namespace Store
         private Item _purchasedItem;
         private float _accountFunds;
         private int _orderQuantity;
+        private float _totalCost;
+        private int _orderID;
 
-        public Order(string name, Item item, float funds, int quantity)
+        public Order(string name, Item item, float funds, int quantity, float cost, int id)
         {
             this._customerName = name;
             this._purchasedItem = item;
             this._accountFunds = funds;
             this._orderQuantity = quantity;
+            this._totalCost = cost;
+            this._orderID = id;
         }
 
         public string GetName() { return _customerName;}
@@ -29,6 +33,9 @@ namespace Store
 
         public int GetQuantity() { return _orderQuantity;}
 
+        public float GetCost() { return _totalCost; }
+
+        public int GetOrderID() { return _orderID; }
 
     }
 }

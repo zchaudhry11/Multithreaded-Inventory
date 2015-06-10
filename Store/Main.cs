@@ -33,7 +33,8 @@ namespace Store
 
         private void button2_Click(object sender, EventArgs e)
         {
-
+            AddOrderForm otherForm = new AddOrderForm();
+            otherForm.Show();
         }
 
         private void tableLayoutPanel1_Paint(object sender, PaintEventArgs e)
@@ -79,6 +80,5 @@ namespace Store
                 }
             }
         }
-
     }
 }

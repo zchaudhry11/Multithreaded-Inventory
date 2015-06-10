@@ -49,20 +49,18 @@ namespace Store
             }
         }
 
-        public static bool SearchInventory(Item item)
+        public static Item SearchInventory(string item)
         {
-            bool itemExists = false;
-            //Remove item if it exists
+            //Find item based on name
             for (int i = 0; i < Inventory.Count; i++)
             {
-                if (Inventory[i].GetName() == item.GetName())
+                if (Inventory[i].GetName() == item)
                 {
-                    itemExists = true;
-                    break;
+                    return Inventory[i];
                 }
             }
 
-            return itemExists;
+            return null;
         }
 
     }
