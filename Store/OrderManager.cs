@@ -52,6 +52,20 @@ namespace Store
 
         }
 
+        public static List<Order> GetOrdersToProcess()
+        {
+            return _ordersToProcess;
+        }
+
+        public static List<Order> GetProcessedOrders()
+        {
+            return _processedOrders;
+        }
+
+        public static List<Order> GetCanceledOrders()
+        {
+            return _canceledOrders;
+        }
 
     }
 }

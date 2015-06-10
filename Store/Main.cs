@@ -15,6 +15,8 @@ namespace Store
     {
         private static TableLayoutPanel itemTable; //Table containing all items currently in store
 
+        private static TableLayoutPanel ordersToProcessTable; //Table containing all orders that need to be processed
+
         public Main()
         {
             InitializeComponent();
@@ -80,5 +82,46 @@ namespace Store
                 }
             }
         }
+
+        private void tableLayoutPanel2_Paint(object sender, PaintEventArgs e)
+        {
+            ordersToProcessTable = tableLayoutPanel2;
+        }
+
+        public static void UpdateOrders()
+        {
+            //Populate orders to process table
+            for (int i = 0; i < OrderManager.GetOrdersToProcess().Count; i++) //Loop through every order
+            {
+                for (int x = 0; x < 5; x++) //Fill out information for each order
+                {
+                    Control c = ordersToProcessTable.GetControlFromPosition(x, i + 1);
+
+                    if (x == 0) //Customer Name
+                    {
+                        c.Text = OrderManager.GetOrdersToProcess()[i].GetName();
+                    }
+                    else if (x == 1) //Item Name
+                    {
+                        c.Text = c.Text = OrderManager.GetOrdersToProcess()[i].GetItem().GetName();
+                    }
+                    else if (x == 2) //Order ID
+                    {
+                        c.Text = OrderManager.GetOrdersToProcess()[i].GetOrderID().ToString();
+                    }
+                    else if (x == 3) //Quantity
+                    {
+                        c.Text = OrderManager.GetOrdersToProcess()[i].GetQuantity().ToString();
+                    }
+                    else if (x == 4) //Total cost
+                    {
+                        float totalCost = OrderManager.GetOrdersToProcess()[i].GetItem().GetPrice() * OrderManager.GetOrdersToProcess()[i].GetQuantity();
+
+                        c.Text = totalCost.ToString();
+                    }
+                }
+            }
+        }
+
     }
 }

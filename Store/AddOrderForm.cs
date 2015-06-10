@@ -3,15 +3,21 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Windows;
 
 namespace Store
 {
     public partial class AddOrderForm : Form
     {
+
+        
+        
+
         public AddOrderForm()
         {
             InitializeComponent();
@@ -34,8 +40,8 @@ namespace Store
                 float totalCost = purchasedItem.GetPrice() * quantity; //Total cost of this order
 
                 Order temp = new Order(nameBox.Text, purchasedItem, Convert.ToInt32(fundsBox.Text), quantity, totalCost, OrderManager.OrderID);
-
                 OrderManager.AddOrder(temp);
+                Main.UpdateOrders();
             }
 
             this.Close();
