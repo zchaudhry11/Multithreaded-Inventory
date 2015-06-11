@@ -14,10 +14,6 @@ namespace Store
 {
     public partial class AddOrderForm : Form
     {
-
-        
-        
-
         public AddOrderForm()
         {
             InitializeComponent();

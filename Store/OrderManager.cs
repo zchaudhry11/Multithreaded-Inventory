@@ -44,12 +44,35 @@ namespace Store
                     Debug.Write("There are not enough items in stock!");
                     Debug.Write("You don't have enough funds in your account.");
                 }
-            }*/
+            }
+            */
         }
 
-        public void ProcessOrders()
+        public void ProcessOrders(Order orderToProcess)
         {
+            //Check if the customer has enough funds
+            float totalCost = orderToProcess.GetCost(); //Total cost of this order
 
+            //If the customer has enough money and there are enough items in stock, process the order
+            if (orderToProcess.GetFunds() >= totalCost && orderToProcess.GetQuantity() <= orderToProcess.GetItem().GetQuantity())
+            {
+                //Subtract funds from customer's account and subtract from inventory quantity
+            }
+            else
+            {
+                if (newOrder.GetFunds() >= totalCost && orderToProcess.GetQuantity() > orderToProcess.GetItem().GetQuantity()) //Customer has enough money
+                {
+                    Debug.Write("There are not enough items in stock!");
+                }
+                if (newOrder.GetFunds() < totalCost && orderToProcess.GetQuantity() <= orderToProcess.GetItem().GetQuantity()) //Not enough money
+                {
+                    Debug.Write("You don't have enough funds in your account.");
+                }
+                if (newOrder.GetFunds() < totalCost && orderToProcess.GetQuantity() > orderToProcess.GetItem().GetQuantity()) //Not enough money or items
+                {
+                    Debug.Write("There are not enough items in stock!");
+                    Debug.Write("You don't have enough funds in your account.");
+                }
         }
 
         public static List<Order> GetOrdersToProcess()
