@@ -37,6 +37,15 @@ namespace Store
 
                 Order temp = new Order(nameBox.Text, purchasedItem, Convert.ToInt32(fundsBox.Text), quantity, totalCost, OrderManager.OrderID);
                 OrderManager.AddOrder(temp);
+
+                //Check if the customer who placed an order exists in the list
+                Customer customer = CustomerManager.FindCustomer(temp.GetName());
+
+                if (customer == null) //Add new customer to list
+                {
+                    CustomerManager.AddCustomer(new Customer(temp.GetName(), temp.GetFunds(), CustomerManager.CustomerID));
+                }
+
                 Main.UpdateOrders();
             }
 
