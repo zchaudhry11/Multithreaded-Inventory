@@ -13,13 +13,18 @@ namespace Store
         private static List<Order> _processedOrders = new List<Order>(); //List of orders that have been completed
         private static  List<Order> _canceledOrders = new List<Order>(); //List of all orders that were canceled
 
+        //Thread queues that are used to process multiple orders at once
+        private static List<Order> thread1 = new List<Order>();
+        private static List<Order> thread2 = new List<Order>();
+        private static List<Order> thread3 = new List<Order>();
+        private static List<Order> thread4 = new List<Order>();
+
         public static int OrderID = 1;
 
         public static void AddOrder(Order newOrder)
         {
             _ordersToProcess.Add(newOrder);
             OrderID++;
-            Trace.Write("order ID: " + newOrder.GetOrderID());
         }
 
         public void ProcessOrders(Order orderToProcess)
