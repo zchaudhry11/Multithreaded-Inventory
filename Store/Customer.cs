@@ -29,6 +29,11 @@ namespace Store
             return _accountBalance;
         }
 
+        public int GetID()
+        {
+            return _customerID;
+        }
+
         public void SetFunds(float amount)
         {
             _accountBalance = amount;

@@ -9,6 +9,7 @@ namespace Store
 {
     class OrderManager
     {
+        private static List<Order> _individualOrders = new List<Order>(); //List of orders made from individual items
         private static List<Order> _ordersToProcess = new List<Order>(); //List of orders that need to get processed
         private static List<Order> _processedOrders = new List<Order>(); //List of orders that have been completed
         private static  List<Order> _canceledOrders = new List<Order>(); //List of all orders that were canceled
@@ -23,8 +24,52 @@ namespace Store
 
         public static void AddOrder(Order newOrder)
         {
-            _ordersToProcess.Add(newOrder);
-            OrderID++;
+            _individualOrders.Add(newOrder);
+            AddCart(_individualOrders);
+            Trace.Write("finished loop! " + _ordersToProcess.Count);
+        }
+
+        public static void AddCart(List<Order> orders)
+        {
+            int orderCounter = 0;
+            int numOrders = _individualOrders.Count;
+            //Loop through all orders and place items into carts to store in final task list
+            while (orderCounter < numOrders)
+            {
+                Customer testCust = CustomerManager.FindCustomer(_individualOrders[0].GetName());
+
+                int id = CustomerManager.FindCustomer(_individualOrders[0].GetName()).GetID(); //Find all orders with this customer id
+                List<Order> cartOrders = new List<Order>(); //All orders placed by a single customer
+
+                for (int i = 0; i < _individualOrders.Count; i++)
+                {
+                    if (CustomerManager.FindCustomer(_individualOrders[0].GetName()).GetID() == id) //Customer found
+                    {
+                        cartOrders.Add(_individualOrders[i]);
+                        orderCounter++;
+                    }
+                }
+
+                //Place all items into cart
+                float totalCost = 0;
+                List<Item> items = new List<Item>();
+                
+                for (int i = 0; i < orders.Count; i++)
+                {
+                    items.Add(cartOrders[i].GetItem());
+                    totalCost += cartOrders[i].GetCost();
+                }
+
+                //Create new order
+                Order finalOrder = new Order(cartOrders[0].GetName(), items, cartOrders[0].GetFunds(), totalCost, OrderID);
+
+                //Remove handled items from original list
+                for (int i = 0; i < cartOrders.Count; i++)
+                {
+                    _individualOrders.Remove(cartOrders[i]);
+                }
+                OrderID++; //Set new order ID for new customer
+            }
         }
 
         public void ProcessOrders(Order orderToProcess)

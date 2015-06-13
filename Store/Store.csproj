@@ -58,6 +58,7 @@
     <Compile Include="AddOrderForm.Designer.cs">
       <DependentUpon>AddOrderForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Cart.cs" />
     <Compile Include="Customer.cs" />
     <Compile Include="CustomerManager.cs" />
     <Compile Include="Main.cs">
