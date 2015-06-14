@@ -103,24 +103,38 @@ namespace Store
                     }
                     else if (x == 1) //Item Name
                     {
-                        c.Text = c.Text = OrderManager.GetOrdersToProcess()[i].GetItem().GetName();
+                        string itemNames = "";
+                        
+                        for (int q = 0; q < OrderManager.GetOrdersToProcess()[i].GetCart().Count; q++)
+                        {
+                            if (q == OrderManager.GetOrdersToProcess()[i].GetCart().Count - 1) //Last item in list
+                            {
+                                itemNames += OrderManager.GetOrdersToProcess()[i].GetCart()[q].GetName();
+                            }
+                            else
+                            {
+                                itemNames += OrderManager.GetOrdersToProcess()[i].GetCart()[q].GetName() + ", ";
+                            }
+                        }
+                        c.Text = itemNames;
                     }
-                    else if (x == 2) //Order ID
+                    else if (x == 2) //Account Funds
                     {
-                        c.Text = OrderManager.GetOrdersToProcess()[i].GetOrderID().ToString();
+                        c.Text = OrderManager.GetOrdersToProcess()[i].GetFunds().ToString();
                     }
-                    else if (x == 3) //Quantity
+                    else if (x == 3) //Total Cost
                     {
-                        c.Text = OrderManager.GetOrdersToProcess()[i].GetQuantity().ToString();
+                        c.Text = OrderManager.GetOrdersToProcess()[i].GetCost().ToString();
                     }
-                    else if (x == 4) //Total cost
+                    else if (x == 4) //Order ID
                     {
-                        float totalCost = OrderManager.GetOrdersToProcess()[i].GetItem().GetPrice() * OrderManager.GetOrdersToProcess()[i].GetQuantity();
+                        //float totalCost = OrderManager.GetOrdersToProcess()[i].GetItem().GetPrice() * OrderManager.GetOrdersToProcess()[i].GetQuantity();
 
-                        c.Text = totalCost.ToString();
+                        c.Text = OrderManager.GetOrdersToProcess()[i].GetOrderID().ToString();
                     }
                 }
             }
+            
         }
 
     }

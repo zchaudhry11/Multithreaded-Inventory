@@ -26,6 +26,7 @@ namespace Store
         {
             _individualOrders.Add(newOrder);
             AddCart(_individualOrders);
+            Main.UpdateOrders(); //Update order UI
             Trace.Write("finished loop! " + _ordersToProcess.Count);
         }
 
@@ -62,6 +63,7 @@ namespace Store
 
                 //Create new order
                 Order finalOrder = new Order(cartOrders[0].GetName(), items, cartOrders[0].GetFunds(), totalCost, OrderID);
+                _ordersToProcess.Add(finalOrder);
 
                 //Remove handled items from original list
                 for (int i = 0; i < cartOrders.Count; i++)

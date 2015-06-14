@@ -47,7 +47,7 @@ namespace Store
 
                 OrderManager.AddOrder(temp); //Add order to list
 
-                Main.UpdateOrders(); //Update order UI
+                //Main.UpdateOrders(); //Update order UI
             }
 
             this.Close();
