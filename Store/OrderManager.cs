@@ -27,9 +27,8 @@ namespace Store
             _individualOrders.Add(newOrder);
             AddCart(_individualOrders);
             Main.UpdateOrders(); //Update order UI
-            Trace.Write("finished loop! " + _ordersToProcess.Count);
         }
-
+        
         public static void AddCart(List<Order> orders)
         {
             int orderCounter = 0;
