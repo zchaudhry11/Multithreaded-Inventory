@@ -63,6 +63,7 @@ namespace Store
                 //Create new order
                 Order finalOrder = new Order(cartOrders[0].GetName(), items, cartOrders[0].GetFunds(), totalCost, OrderID);
                 _ordersToProcess.Add(finalOrder);
+                ProcessOrders(finalOrder);
 
                 //Remove handled items from original list
                 for (int i = 0; i < cartOrders.Count; i++)
@@ -73,18 +74,18 @@ namespace Store
             }
         }
 
-        public void ProcessOrders(Order orderToProcess)
+        public static void ProcessOrders(Order orderToProcess)
         {
             //Check if the customer has enough funds
             float totalCost = orderToProcess.GetCost(); //Total cost of this order
             Customer buyer = CustomerManager.FindCustomer(orderToProcess.GetName()); //Get the customer who placed order
 
             //If the customer has enough money and there are enough items in stock, process the order
-            if (buyer.GetFunds() >= totalCost && orderToProcess.GetQuantity() <= orderToProcess.GetItem().GetQuantity())
+            if (buyer.GetFunds() >= totalCost && orderToProcess.GetQuantity() <= orderToProcess.GetCart().GetItem().GetQuantity())
             {
                 //Subtract funds from customer's account and subtract from inventory quantity
                 buyer.SetFunds(buyer.GetFunds() - totalCost);
-                Item purchasedItem = Storefront.SearchInventory(orderToProcess.GetItem().GetName());
+                Item purchasedItem = Storefront.SearchInventory(orderToProcess.GetItem().GetName());.
                 purchasedItem.SetQuantity(purchasedItem.GetQuantity() - orderToProcess.GetQuantity());
 
                 _processedOrders.Add(orderToProcess); //Add order to the processed list
@@ -106,7 +107,7 @@ namespace Store
                 }
             }
         }
-
+        
         public static List<Order> GetOrdersToProcess()
         {
             return _ordersToProcess;
