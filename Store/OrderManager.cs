@@ -72,6 +72,8 @@ namespace Store
                 }
                 OrderID++; //Set new order ID for new customer
             }
+            Trace.Write("Processed orders: " + _processedOrders.Count);
+            Trace.Write("quantity: " + Storefront.Inventory[0].GetQuantity());
         }
 
         public static void ProcessOrders(Order orderToProcess)
@@ -81,12 +83,15 @@ namespace Store
             Customer buyer = CustomerManager.FindCustomer(orderToProcess.GetName()); //Get the customer who placed order
 
             //If the customer has enough money and there are enough items in stock, process the order
-            if (buyer.GetFunds() >= totalCost && orderToProcess.GetQuantity() <= orderToProcess.GetCart().GetItem().GetQuantity())
+            if (buyer.GetFunds() >= totalCost && orderToProcess.GetQuantity() <= Storefront.SearchInventory(orderToProcess.GetCart()[0].GetName()).GetQuantity())
             {
                 //Subtract funds from customer's account and subtract from inventory quantity
                 buyer.SetFunds(buyer.GetFunds() - totalCost);
-                Item purchasedItem = Storefront.SearchInventory(orderToProcess.GetItem().GetName());.
-                purchasedItem.SetQuantity(purchasedItem.GetQuantity() - orderToProcess.GetQuantity());
+                Item purchasedItem = Storefront.SearchInventory(orderToProcess.GetCart()[0].GetName()); //Get the item that the buyer purchased
+
+                //Update quantity in the inventory
+                int newQuantity = purchasedItem.GetQuantity() - orderToProcess.GetQuantity();
+                Storefront.UpdateItemQuantity(purchasedItem.GetName(), newQuantity);
 
                 _processedOrders.Add(orderToProcess); //Add order to the processed list
             }

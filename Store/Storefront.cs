@@ -63,5 +63,18 @@ namespace Store
             return null;
         }
 
+        public static void UpdateItemQuantity(string item, int quantity)
+        {
+            Trace.Write("QUAN TO UPDATE: " + quantity);
+            //Find item based on name
+            for (int i = 0; i < Inventory.Count; i++)
+            {
+                if (Inventory[i].GetName() == item)
+                {
+                    Inventory[i].SetQuantity(quantity); //Update quantity
+                }
+            }
+        }
+
     }
 }
