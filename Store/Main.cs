@@ -17,6 +17,8 @@ namespace Store
 
         private static TableLayoutPanel ordersToProcessTable; //Table containing all orders that need to be processed
 
+        private static TableLayoutPanel processedOrdersTable; //Table containing all completed orders
+
         public Main()
         {
             InitializeComponent();
@@ -87,6 +89,10 @@ namespace Store
         {
             ordersToProcessTable = tableLayoutPanel2;
         }
+        private void tableLayoutPanel3_Paint(object sender, PaintEventArgs e)
+        {
+            processedOrdersTable = tableLayoutPanel3;
+        }
 
         public static void UpdateOrders()
         {
@@ -134,8 +140,57 @@ namespace Store
                     }
                 }
             }
-            
         }
+
+        public static void UpdateProcessedOrders()
+        {
+            //Populate processed table
+            for (int i = 0; i < OrderManager.GetProcessedOrders().Count; i++) //Loop through every order
+            {
+                for (int x = 0; x < 5; x++) //Fill out information for each order
+                {
+                    Control c = processedOrdersTable.GetControlFromPosition(x, i + 1);
+
+                    if (x == 0) //Customer Name
+                    {
+                        c.Text = OrderManager.GetProcessedOrders()[i].GetName();
+                    }
+                    else if (x == 1) //Item Name
+                    {
+                        string itemNames = "";
+
+                        for (int q = 0; q < OrderManager.GetProcessedOrders()[i].GetCart().Count; q++)
+                        {
+                            if (q == OrderManager.GetProcessedOrders()[i].GetCart().Count - 1) //Last item in list
+                            {
+                                itemNames += OrderManager.GetProcessedOrders()[i].GetCart()[q].GetName();
+                            }
+                            else
+                            {
+                                itemNames += OrderManager.GetProcessedOrders()[i].GetCart()[q].GetName() + ", ";
+                            }
+                        }
+                        c.Text = itemNames;
+                    }
+                    else if (x == 2) //Account Funds
+                    {
+                        c.Text = OrderManager.GetProcessedOrders()[i].GetFunds().ToString();
+                    }
+                    else if (x == 3) //Total Cost
+                    {
+                        c.Text = OrderManager.GetProcessedOrders()[i].GetCost().ToString();
+                    }
+                    else if (x == 4) //Order ID
+                    {
+                        //float totalCost = OrderManager.GetOrdersToProcess()[i].GetItem().GetPrice() * OrderManager.GetOrdersToProcess()[i].GetQuantity();
+
+                        c.Text = OrderManager.GetProcessedOrders()[i].GetOrderID().ToString();
+                    }
+                }
+            }
+        }
+
+
 
     }
 }

@@ -72,6 +72,10 @@ namespace Store
                 }
                 OrderID++; //Set new order ID for new customer
             }
+
+            //Update processed orders UI
+            Main.UpdateProcessedOrders();
+
             Trace.Write("Processed orders: " + _processedOrders.Count);
             Trace.Write("quantity: " + Storefront.Inventory[0].GetQuantity());
         }
