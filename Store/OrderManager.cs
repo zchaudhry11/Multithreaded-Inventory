@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Store
 {
@@ -25,11 +21,11 @@ namespace Store
         public static void AddOrder(Order newOrder)
         {
             _individualOrders.Add(newOrder);
-            AddCart(_individualOrders);
+            AddCart(_individualOrders, newOrder.GetQuantity());
             Main.UpdateOrders(); //Update order UI
         }
         
-        public static void AddCart(List<Order> orders)
+        public static void AddCart(List<Order> orders, int quantity)
         {
             int orderCounter = 0;
             int numOrders = _individualOrders.Count;
@@ -45,6 +41,7 @@ namespace Store
                 {
                     if (CustomerManager.FindCustomer(_individualOrders[0].GetName()).GetID() == id) //Customer found
                     {
+                        //Create cart from items in order
                         cartOrders.Add(_individualOrders[i]);
                         orderCounter++;
                     }
@@ -63,7 +60,7 @@ namespace Store
                 //Create new order
                 Order finalOrder = new Order(cartOrders[0].GetName(), items, cartOrders[0].GetFunds(), totalCost, OrderID);
                 _ordersToProcess.Add(finalOrder);
-                ProcessOrders(finalOrder);
+                ProcessOrders(finalOrder, quantity);
 
                 //Remove handled items from original list
                 for (int i = 0; i < cartOrders.Count; i++)
@@ -75,44 +72,50 @@ namespace Store
 
             //Update processed orders UI
             Main.UpdateProcessedOrders();
+            Main.UpdateStorefront();
 
-            Trace.Write("Processed orders: " + _processedOrders.Count);
-            Trace.Write("quantity: " + Storefront.Inventory[0].GetQuantity());
+            Trace.WriteLine("Processed orders: " + _processedOrders.Count);
+            Trace.WriteLine("Canceled orders: " + _canceledOrders.Count);
         }
 
-        public static void ProcessOrders(Order orderToProcess)
+        public static void ProcessOrders(Order orderToProcess, int quantity)
         {
             //Check if the customer has enough funds
             float totalCost = orderToProcess.GetCost(); //Total cost of this order
             Customer buyer = CustomerManager.FindCustomer(orderToProcess.GetName()); //Get the customer who placed order
 
             //If the customer has enough money and there are enough items in stock, process the order
-            if (buyer.GetFunds() >= totalCost && orderToProcess.GetQuantity() <= Storefront.SearchInventory(orderToProcess.GetCart()[0].GetName()).GetQuantity())
+            if (buyer.GetFunds() >= totalCost && quantity <= Storefront.SearchInventory(orderToProcess.GetCart()[0].GetName()).GetQuantity())
             {
                 //Subtract funds from customer's account and subtract from inventory quantity
                 buyer.SetFunds(buyer.GetFunds() - totalCost);
                 Item purchasedItem = Storefront.SearchInventory(orderToProcess.GetCart()[0].GetName()); //Get the item that the buyer purchased
 
                 //Update quantity in the inventory
-                int newQuantity = purchasedItem.GetQuantity() - orderToProcess.GetQuantity();
+                int newQuantity = purchasedItem.GetQuantity() - quantity;
                 Storefront.UpdateItemQuantity(purchasedItem.GetName(), newQuantity);
 
                 _processedOrders.Add(orderToProcess); //Add order to the processed list
             }
             else
             {
-                if (buyer.GetFunds() >= totalCost && orderToProcess.GetQuantity() > orderToProcess.GetItem().GetQuantity()) //Customer has enough money
+                Item purchasedItem = Storefront.SearchInventory(orderToProcess.GetCart()[0].GetName());
+
+                if (buyer.GetFunds() >= totalCost && quantity > purchasedItem.GetQuantity()) //Customer has enough money
                 {
-                    Debug.Write("There are not enough items in stock!");
+                    Debug.WriteLine("There are not enough items in stock!");
+                    _canceledOrders.Add(orderToProcess);
                 }
-                if (buyer.GetFunds() < totalCost && orderToProcess.GetQuantity() <= orderToProcess.GetItem().GetQuantity()) //Not enough money
+                if (buyer.GetFunds() < totalCost && quantity <= purchasedItem.GetQuantity()) //Not enough money
                 {
-                    Debug.Write("You don't have enough funds in your account.");
+                    Debug.WriteLine("You don't have enough funds in your account.");
+                    _canceledOrders.Add(orderToProcess);
                 }
-                if (buyer.GetFunds() < totalCost && orderToProcess.GetQuantity() > orderToProcess.GetItem().GetQuantity()) //Not enough money or items
+                if (buyer.GetFunds() < totalCost && quantity > purchasedItem.GetQuantity()) //Not enough money or items
                 {
-                    Debug.Write("There are not enough items in stock!");
-                    Debug.Write("You don't have enough funds in your account.");
+                    Debug.WriteLine("There are not enough items in stock!");
+                    Debug.WriteLine("You don't have enough funds in your account.");
+                    _canceledOrders.Add(orderToProcess);
                 }
             }
         }

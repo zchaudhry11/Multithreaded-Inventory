@@ -9,3 +9,14 @@ C:\Users\Zia\Documents\Visual Studio 2013\Projects\Store\Store\obj\Debug\Store.c
 C:\Users\Zia\Documents\Visual Studio 2013\Projects\Store\Store\obj\Debug\Store.AddItemForm.resources
 C:\Users\Zia\documents\visual studio 2013\Projects\Store\Store\obj\Debug\Store.Main.resources
 C:\Users\Zia\documents\visual studio 2013\Projects\Store\Store\obj\Debug\Store.AddOrderForm.resources
+C:\Users\Zia\Documents\Visual Studio 2015\Projects\Store\Store\bin\Debug\Store.exe.config
+C:\Users\Zia\Documents\Visual Studio 2015\Projects\Store\Store\obj\Debug\Store.exe
+C:\Users\Zia\Documents\Visual Studio 2015\Projects\Store\Store\obj\Debug\Store.pdb
+C:\Users\Zia\Documents\Visual Studio 2015\Projects\Store\Store\bin\Debug\Store.exe
+C:\Users\Zia\Documents\Visual Studio 2015\Projects\Store\Store\bin\Debug\Store.pdb
+C:\Users\Zia\Documents\Visual Studio 2015\Projects\Store\Store\obj\Debug\Store.csprojResolveAssemblyReference.cache
+C:\Users\Zia\Documents\Visual Studio 2015\Projects\Store\Store\obj\Debug\Store.AddItemForm.resources
+C:\Users\Zia\Documents\Visual Studio 2015\Projects\Store\Store\obj\Debug\Store.AddOrderForm.resources
+C:\Users\Zia\Documents\Visual Studio 2015\Projects\Store\Store\obj\Debug\Store.Main.resources
+C:\Users\Zia\Documents\Visual Studio 2015\Projects\Store\Store\obj\Debug\Store.Properties.Resources.resources
+C:\Users\Zia\Documents\Visual Studio 2015\Projects\Store\Store\obj\Debug\Store.csproj.GenerateResource.Cache

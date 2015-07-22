@@ -19,9 +19,21 @@ namespace Store
 
         private static TableLayoutPanel processedOrdersTable; //Table containing all completed orders
 
+        private bool _activatedTabs = false; //Raised when all tabs have been activated at least once
+
         public Main()
         {
             InitializeComponent();
+            frontTabs.Selected += new TabControlEventHandler(frontTabs_Selected);
+        }
+
+        //Update program statistics
+        private void frontTabs_Selected(object sender, TabControlEventArgs e)
+        {
+            if (frontTabs.SelectedIndex == 3)
+            {
+                UpdateProgramStats();
+            }
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -33,12 +45,26 @@ namespace Store
         {
             AddItemForm otherForm = new AddItemForm();
             otherForm.Show();
+
+            //Activate tabs if not done before
+            if (_activatedTabs == false)
+            {
+                ActivateTab(1);
+                _activatedTabs = true;
+            }
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
             AddOrderForm otherForm = new AddOrderForm();
             otherForm.Show();
+
+            //Activate tabs if not done before
+            if (_activatedTabs == false)
+            {
+                ActivateTab(1);
+                _activatedTabs = true;
+            }
         }
 
         private void tableLayoutPanel1_Paint(object sender, PaintEventArgs e)
@@ -126,7 +152,16 @@ namespace Store
                     }
                     else if (x == 2) //Account Funds
                     {
-                        c.Text = OrderManager.GetOrdersToProcess()[i].GetFunds().ToString();
+                        //If customer exists
+                        Customer buyer = CustomerManager.FindCustomer(OrderManager.GetOrdersToProcess()[i].GetName());
+
+                        if (buyer != null)
+                        {
+                            c.Text = buyer.GetFunds().ToString();
+                        } else
+                        {
+                            c.Text = OrderManager.GetOrdersToProcess()[i].GetFunds().ToString();
+                        }
                     }
                     else if (x == 3) //Total Cost
                     {
@@ -134,8 +169,6 @@ namespace Store
                     }
                     else if (x == 4) //Order ID
                     {
-                        //float totalCost = OrderManager.GetOrdersToProcess()[i].GetItem().GetPrice() * OrderManager.GetOrdersToProcess()[i].GetQuantity();
-
                         c.Text = OrderManager.GetOrdersToProcess()[i].GetOrderID().ToString();
                     }
                 }
@@ -182,15 +215,38 @@ namespace Store
                     }
                     else if (x == 4) //Order ID
                     {
-                        //float totalCost = OrderManager.GetOrdersToProcess()[i].GetItem().GetPrice() * OrderManager.GetOrdersToProcess()[i].GetQuantity();
-
                         c.Text = OrderManager.GetProcessedOrders()[i].GetOrderID().ToString();
                     }
                 }
             }
         }
 
+        public void UpdateProgramStats() //Update all program statistics
+        {
+            //ActivateTab(4);
+            processedOrdersStat.Text = OrderManager.GetProcessedOrders().Count.ToString();
+            canceledOrdersStat.Text = OrderManager.GetCanceledOrders().Count.ToString();
+            totalCustomersStat.Text = CustomerManager.GetCustomers().Count.ToString();
+        }
 
+        public void ActivateTab(int tabIndex)
+        {
+            frontTabs.SelectedIndex = tabIndex;
+
+            if (tabIndex == 1)
+            {
+                ActivateTab(2);
+            }
+            if (tabIndex == 2)
+            {
+                ActivateTab(3);
+            }
+            if (tabIndex == 3)
+            {
+                ActivateTab(0);
+            }
+
+        }
 
     }
 }

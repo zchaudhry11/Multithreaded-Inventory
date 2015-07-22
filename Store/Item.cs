@@ -41,7 +41,7 @@ namespace Store
         public void SetStock(bool stock)
         {
             _inStock = stock;
-            if (stock == false) SetQuantity(0);
+          //  if (stock == false) SetQuantity(0);
         }
 
         public void SetQuantity(int amount)
@@ -50,7 +50,7 @@ namespace Store
             if (_quantity < 0) _quantity = 0;
 
             //Disable price if there are none available
-            if (_quantity == 0) SetStock(false);
+           // if (_quantity == 0) SetStock(false);
         }
 
         public string GetName()
