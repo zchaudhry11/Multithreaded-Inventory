@@ -55,7 +55,6 @@ namespace Store
                     return Inventory[i];
                 }
             }
-
             return null;
         }
 

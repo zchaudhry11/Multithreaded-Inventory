@@ -34,6 +34,11 @@ namespace Store
             {
                 Customer testCust = CustomerManager.FindCustomer(_individualOrders[0].GetName());
 
+                if (testCust == null) //Add new customer to list
+                {
+                    CustomerManager.AddCustomer(new Customer(_individualOrders[0].GetName(), _individualOrders[0].GetFunds(), CustomerManager.CustomerID));
+                }
+
                 int id = CustomerManager.FindCustomer(_individualOrders[0].GetName()).GetID(); //Find all orders with this customer id
                 List<Order> cartOrders = new List<Order>(); //All orders placed by a single customer
 
@@ -71,11 +76,9 @@ namespace Store
             }
 
             //Update processed orders UI
+            Main.OrderProcessTimer.Stop(); //Stop process timer for order
             Main.UpdateProcessedOrders();
             Main.UpdateStorefront();
-
-            Trace.WriteLine("Processed orders: " + _processedOrders.Count);
-            Trace.WriteLine("Canceled orders: " + _canceledOrders.Count);
         }
 
         public static void ProcessOrders(Order orderToProcess, int quantity)
@@ -88,7 +91,7 @@ namespace Store
             if (buyer.GetFunds() >= totalCost && quantity <= Storefront.SearchInventory(orderToProcess.GetCart()[0].GetName()).GetQuantity())
             {
                 //Subtract funds from customer's account and subtract from inventory quantity
-                buyer.SetFunds(buyer.GetFunds() - totalCost);
+                orderToProcess.SetFunds(buyer.GetFunds() - totalCost);
                 Item purchasedItem = Storefront.SearchInventory(orderToProcess.GetCart()[0].GetName()); //Get the item that the buyer purchased
 
                 //Update quantity in the inventory

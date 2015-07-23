@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.IO;
 
 namespace Store
 {
@@ -20,6 +21,11 @@ namespace Store
         private static TableLayoutPanel processedOrdersTable; //Table containing all completed orders
 
         private bool _activatedTabs = false; //Raised when all tabs have been activated at least once
+
+        private string importedOrdersFilePath; //String containing the path to the imported orders
+        private string importedItemsFilePath; //String containing the path to the imported items
+
+        public static Stopwatch OrderProcessTimer = new Stopwatch(); //Timer that keeps track of how long it takes to finish processing all orders
 
         public Main()
         {
@@ -227,6 +233,7 @@ namespace Store
             processedOrdersStat.Text = OrderManager.GetProcessedOrders().Count.ToString();
             canceledOrdersStat.Text = OrderManager.GetCanceledOrders().Count.ToString();
             totalCustomersStat.Text = CustomerManager.GetCustomers().Count.ToString();
+            totalProcessRuntimeStat.Text = Main.OrderProcessTimer.ElapsedMilliseconds.ToString() + " ms";
         }
 
         public void ActivateTab(int tabIndex)
@@ -246,6 +253,103 @@ namespace Store
                 ActivateTab(0);
             }
 
+        }
+
+        private void importFileButton_Click(object sender, EventArgs e)
+        {
+            importFileDialog.ShowDialog();
+
+            //Activate tabs if not done before
+            if (_activatedTabs == false)
+            {
+                ActivateTab(1);
+                _activatedTabs = true;
+            }
+        }
+
+        private void importFileDialog_FileOk(object sender, CancelEventArgs e)
+        {
+            importedOrdersFilePath = importFileDialog.FileName;
+            ProcessImportedOrders(importedOrdersFilePath);
+        }
+
+        //Parse the orders that were obtained from the document
+        private void ProcessImportedOrders(string path)
+        {
+            char[] delims = new char[] { ',' };
+            string[] result;
+
+            StreamReader openedFile = new StreamReader(path);
+
+            while (openedFile.EndOfStream == false)
+            {
+                string line = openedFile.ReadLine();
+
+                result = line.Split(delims); //Split string by delims
+
+                //Remove extra space in each line
+                for (int i = 0; i < result.Length; i++)
+                {
+                    if (result[i][0] == ' ')
+                    {
+                        result[i] = result[i].Substring(1);
+                    }
+                }
+
+                //Create order from file and add to order queue
+                float totalCost = Storefront.SearchInventory(result[1]).GetPrice() * Convert.ToInt32(result[3]);
+                Order orderToAdd = new Order(result[0], Storefront.SearchInventory(result[1]), Convert.ToInt32(result[2]), Convert.ToInt32(result[3]), totalCost, OrderManager.GetOrdersToProcess().Count);
+                OrderProcessTimer.Start(); //Start the process timer
+                OrderManager.AddOrder(orderToAdd);
+            }
+        }
+
+        private void importInventoryButton_Click(object sender, EventArgs e)
+        {
+            importItemDialog.ShowDialog();
+
+            //Activate tabs if not done before
+            if (_activatedTabs == false)
+            {
+                ActivateTab(1);
+                _activatedTabs = true;
+            }
+        }
+
+        private void importItemDialog_FileOk(object sender, CancelEventArgs e)
+        {
+            importedItemsFilePath = importItemDialog.FileName;
+            ProcessImportedInventory(importedItemsFilePath);
+        }
+
+        //Parse the items that were obtained from the document
+        private void ProcessImportedInventory(string path)
+        {
+            char[] delims = new char[] { ',' };
+            string[] result;
+
+            StreamReader openedFile = new StreamReader(path);
+
+            while (openedFile.EndOfStream == false)
+            {
+                string line = openedFile.ReadLine();
+
+                result = line.Split(delims); //Split string by delims
+
+                //Remove extra space in name
+                for (int i = 0; i < result.Length; i++)
+                {
+                    if (result[i][0] == ' ')
+                    {
+                        result[i] = result[i].Substring(1);
+                    }
+                }
+
+                //Create item from file and add to storefront
+                Item itemToAdd = new Item(result[0], result[1], Convert.ToInt32(result[2]), Convert.ToBoolean(result[3]), Convert.ToInt32(result[4]));
+                Storefront.AddItem(itemToAdd);
+                UpdateStorefront();
+            }
         }
 
     }
