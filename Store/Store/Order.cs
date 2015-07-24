@@ -42,8 +42,6 @@ namespace Store
 
         public float GetFunds() { return _accountFunds;}
 
-        public void SetFunds(float amount) { _accountFunds = amount; }
-
         public int GetQuantity() { return _orderQuantity;}
 
         public float GetCost() { return _totalCost; }

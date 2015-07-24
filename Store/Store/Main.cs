@@ -128,57 +128,55 @@ namespace Store
 
         public static void UpdateOrders()
         {
-            //Populate orders to process table
-            for (int i = 0; i < OrderManager.GetOrdersToProcess().Count; i++) //Loop through every order
+            if (OrderManager.GetOrdersToProcess().Count <= 16)
             {
-                for (int x = 0; x < 5; x++) //Fill out information for each order
+                //Populate orders to process table
+                for (int i = 0; i < OrderManager.GetOrdersToProcess().Count; i++) //Loop through every order
                 {
-                    Control c = ordersToProcessTable.GetControlFromPosition(x, i + 1);
+                    for (int x = 0; x < 5; x++) //Fill out information for each order
+                    {
+                        Control c = ordersToProcessTable.GetControlFromPosition(x, i + 1);
 
-                    if (x == 0) //Customer Name
-                    {
-                        c.Text = OrderManager.GetOrdersToProcess()[i].GetName();
-                    }
-                    else if (x == 1) //Item Name
-                    {
-                        string itemNames = "";
-                        
-                        for (int q = 0; q < OrderManager.GetOrdersToProcess()[i].GetCart().Count; q++)
+                        if (x == 0) //Customer Name
                         {
-                            if (q == OrderManager.GetOrdersToProcess()[i].GetCart().Count - 1) //Last item in list
-                            {
-                                itemNames += OrderManager.GetOrdersToProcess()[i].GetCart()[q].GetName();
-                            }
-                            else
-                            {
-                                itemNames += OrderManager.GetOrdersToProcess()[i].GetCart()[q].GetName() + ", ";
-                            }
+                            c.Text = OrderManager.GetOrdersToProcess()[i].GetName();
                         }
-                        c.Text = itemNames;
-                    }
-                    else if (x == 2) //Account Funds
-                    {
-                        //If customer exists
-                        Customer buyer = CustomerManager.FindCustomer(OrderManager.GetOrdersToProcess()[i].GetName());
-
-                        if (buyer != null)
+                        else if (x == 1) //Item Name
                         {
-                            c.Text = buyer.GetFunds().ToString();
-                        } else
+                            string itemNames = "";
+
+                            for (int q = 0; q < OrderManager.GetOrdersToProcess()[i].GetCart().Count; q++)
+                            {
+                                if (q == OrderManager.GetOrdersToProcess()[i].GetCart().Count - 1) //Last item in list
+                                {
+                                    itemNames += OrderManager.GetOrdersToProcess()[i].GetCart()[q].GetName();
+                                }
+                                else
+                                {
+                                    itemNames += OrderManager.GetOrdersToProcess()[i].GetCart()[q].GetName() + ", ";
+                                }
+                            }
+                            c.Text = itemNames;
+                        }
+                        else if (x == 2) //Account Funds
                         {
                             c.Text = OrderManager.GetOrdersToProcess()[i].GetFunds().ToString();
                         }
-                    }
-                    else if (x == 3) //Total Cost
-                    {
-                        c.Text = OrderManager.GetOrdersToProcess()[i].GetCost().ToString();
-                    }
-                    else if (x == 4) //Order ID
-                    {
-                        c.Text = OrderManager.GetOrdersToProcess()[i].GetOrderID().ToString();
+                        else if (x == 3) //Total Cost
+                        {
+                            c.Text = OrderManager.GetOrdersToProcess()[i].GetCost().ToString();
+                        }
+                        else if (x == 4) //Order ID
+                        {
+                            c.Text = OrderManager.GetOrdersToProcess()[i].GetOrderID().ToString();
+                        }
                     }
                 }
+            } else //There are more than 16 orders that need to be drawn
+            {
+
             }
+
         }
 
         public static void UpdateProcessedOrders()
@@ -229,11 +227,10 @@ namespace Store
 
         public void UpdateProgramStats() //Update all program statistics
         {
-            //ActivateTab(4);
             processedOrdersStat.Text = OrderManager.GetProcessedOrders().Count.ToString();
             canceledOrdersStat.Text = OrderManager.GetCanceledOrders().Count.ToString();
             totalCustomersStat.Text = CustomerManager.GetCustomers().Count.ToString();
-            totalProcessRuntimeStat.Text = Main.OrderProcessTimer.ElapsedMilliseconds.ToString() + " ms";
+            totalProcessRuntimeStat.Text = OrderProcessTimer.ElapsedMilliseconds.ToString() + " ms";
         }
 
         public void ActivateTab(int tabIndex)
@@ -252,7 +249,6 @@ namespace Store
             {
                 ActivateTab(0);
             }
-
         }
 
         private void importFileButton_Click(object sender, EventArgs e)
@@ -298,10 +294,21 @@ namespace Store
 
                 //Create order from file and add to order queue
                 float totalCost = Storefront.SearchInventory(result[1]).GetPrice() * Convert.ToInt32(result[3]);
-                Order orderToAdd = new Order(result[0], Storefront.SearchInventory(result[1]), Convert.ToInt32(result[2]), Convert.ToInt32(result[3]), totalCost, OrderManager.GetOrdersToProcess().Count);
-                OrderProcessTimer.Start(); //Start the process timer
-                OrderManager.AddOrder(orderToAdd);
+
+                Customer buyer = CustomerManager.FindCustomer(result[0]);
+                if (buyer == null)
+                {
+                    Order orderToAdd = new Order(result[0], Storefront.SearchInventory(result[1]), Convert.ToInt32(result[2]), Convert.ToInt32(result[3]), totalCost, OrderManager.GetOrdersToProcess().Count);
+                    OrderManager.AddOrder(orderToAdd);
+                    OrderProcessTimer.Start(); //Start the process timer
+                } else
+                {
+                    Order orderToAdd = new Order(result[0], Storefront.SearchInventory(result[1]), buyer.GetFunds(), Convert.ToInt32(result[3]), totalCost, OrderManager.GetOrdersToProcess().Count);
+                    OrderManager.AddOrder(orderToAdd);
+                    OrderProcessTimer.Start(); //Start the process timer
+                }
             }
+            OrderProcessTimer.Stop();
         }
 
         private void importInventoryButton_Click(object sender, EventArgs e)

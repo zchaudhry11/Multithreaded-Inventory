@@ -91,7 +91,7 @@ namespace Store
             if (buyer.GetFunds() >= totalCost && quantity <= Storefront.SearchInventory(orderToProcess.GetCart()[0].GetName()).GetQuantity())
             {
                 //Subtract funds from customer's account and subtract from inventory quantity
-                orderToProcess.SetFunds(buyer.GetFunds() - totalCost);
+                buyer.SetFunds(buyer.GetFunds() - totalCost);
                 Item purchasedItem = Storefront.SearchInventory(orderToProcess.GetCart()[0].GetName()); //Get the item that the buyer purchased
 
                 //Update quantity in the inventory
@@ -121,6 +121,7 @@ namespace Store
                     _canceledOrders.Add(orderToProcess);
                 }
             }
+            Main.OrderProcessTimer.Stop();
         }
         
         public static List<Order> GetOrdersToProcess()
