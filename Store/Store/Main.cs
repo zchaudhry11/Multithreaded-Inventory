@@ -80,38 +80,81 @@ namespace Store
 
         public static void UpdateStorefront()
         {
-            //Populate item table
-            for (int i = 0; i < Storefront.Inventory.Count; i++) //Loop through every item in inventory
-            {
-                for (int x = 0; x < 5; x++) //Fill out information for each item
-                {
-                    Control c = itemTable.GetControlFromPosition(x, i+1);
 
-                    if (x == 0) //Item name
+            if (Storefront.Inventory.Count <= 16)
+            {
+                //Populate item table
+                for (int i = 0; i < Storefront.Inventory.Count; i++) //Loop through every item in inventory
+                {
+                    for (int x = 0; x < 5; x++) //Fill out information for each item
                     {
-                        c.Text = Storefront.Inventory[i].GetName();
-                    }
-                    else if (x == 1) //Item description
-                    {
-                        c.Text = Storefront.Inventory[i].GetDesc();
-                    }
-                    else if (x == 2) //Item cost
-                    {
-                        c.Text = Convert.ToSingle(Storefront.Inventory[i].GetPrice()).ToString();
-                    }
-                    else if (x == 3) //Item stock
-                    {
-                        if (Storefront.Inventory[i].GetStock() == true)
+                        Control c = itemTable.GetControlFromPosition(x, i + 1);
+
+                        if (x == 0) //Item name
                         {
-                            c.Text = "Yes";
-                        } else 
+                            c.Text = Storefront.Inventory[i].GetName();
+                        }
+                        else if (x == 1) //Item description
                         {
-                            c.Text = "No";
-                        } 
+                            c.Text = Storefront.Inventory[i].GetDesc();
+                        }
+                        else if (x == 2) //Item cost
+                        {
+                            c.Text = Convert.ToSingle(Storefront.Inventory[i].GetPrice()).ToString();
+                        }
+                        else if (x == 3) //Item stock
+                        {
+                            if (Storefront.Inventory[i].GetStock() == true)
+                            {
+                                c.Text = "Yes";
+                            }
+                            else
+                            {
+                                c.Text = "No";
+                            }
+                        }
+                        else if (x == 4) //Item quantity
+                        {
+                            c.Text = Convert.ToInt32(Storefront.Inventory[i].GetQuantity()).ToString();
+                        }
                     }
-                    else if (x == 4) //Item quantity
+                }
+            } else //There are more than 16 items that need to be drawn
+            {
+                //Populate item table
+                for (int i = 0; i < 16; i++) //Loop through every item in inventory
+                {
+                    for (int x = 0; x < 5; x++) //Fill out information for each item
                     {
-                        c.Text = Convert.ToInt32(Storefront.Inventory[i].GetQuantity()).ToString();
+                        Control c = itemTable.GetControlFromPosition(x, i + 1);
+
+                        if (x == 0) //Item name
+                        {
+                            c.Text = Storefront.Inventory[Storefront.Inventory.Count-1-i].GetName();
+                        }
+                        else if (x == 1) //Item description
+                        {
+                            c.Text = Storefront.Inventory[Storefront.Inventory.Count - 1 - i].GetDesc();
+                        }
+                        else if (x == 2) //Item cost
+                        {
+                            c.Text = Convert.ToSingle(Storefront.Inventory[Storefront.Inventory.Count - 1 - i].GetPrice()).ToString();
+                        }
+                        else if (x == 3) //Item stock
+                        {
+                            if (Storefront.Inventory[Storefront.Inventory.Count - 1 - i].GetStock() == true)
+                            {
+                                c.Text = "Yes";
+                            }
+                            else
+                            {
+                                c.Text = "No";
+                            }
+                        }
+                        else if (x == 4) //Item quantity
+                        {
+                            c.Text = Convert.ToInt32(Storefront.Inventory[Storefront.Inventory.Count - 1 - i].GetQuantity()).ToString();
+                        }
                     }
                 }
             }
@@ -172,57 +215,148 @@ namespace Store
                         }
                     }
                 }
-            } else //There are more than 16 orders that need to be drawn
+            } else //There are more than 16 orders that need to be drawn so draw the last 16 orders
             {
+                for (int i = 0; i < 16; i++)
+                {
+                    for (int x = 0; x < 5; x++) //Fill out information for each order
+                    {
+                        Control c = ordersToProcessTable.GetControlFromPosition(x, i + 1);
 
+                        if (x == 0) //Customer Name
+                        {
+                            c.Text = OrderManager.GetOrdersToProcess()[OrderManager.GetOrdersToProcess().Count-i-1].GetName();
+                        }
+                        else if (x == 1) //Item Name
+                        {
+                            string itemNames = "";
+                            
+                            for (int q = 0; q < OrderManager.GetOrdersToProcess()[OrderManager.GetOrdersToProcess().Count - i - 1].GetCart().Count; q++)
+                            {
+                                if (q == OrderManager.GetOrdersToProcess()[OrderManager.GetOrdersToProcess().Count - i - 1].GetCart().Count - 1) //Last item in list
+                                {
+                                    itemNames += OrderManager.GetOrdersToProcess()[OrderManager.GetOrdersToProcess().Count - i - 1].GetCart()[q].GetName();
+                                }
+                                else
+                                {
+                                    itemNames += OrderManager.GetOrdersToProcess()[OrderManager.GetOrdersToProcess().Count - i - 1].GetCart()[q].GetName() + ", ";
+                                }
+                            }
+                            c.Text = itemNames;
+                        }
+                        else if (x == 2) //Account Funds
+                        {
+                            c.Text = OrderManager.GetOrdersToProcess()[OrderManager.GetOrdersToProcess().Count - i - 1].GetFunds().ToString();
+                        }
+                        else if (x == 3) //Total Cost
+                        {
+                            c.Text = OrderManager.GetOrdersToProcess()[OrderManager.GetOrdersToProcess().Count - i - 1].GetCost().ToString();
+                        }
+                        else if (x == 4) //Order ID
+                        {
+                            c.Text = OrderManager.GetOrdersToProcess()[OrderManager.GetOrdersToProcess().Count - i - 1].GetOrderID().ToString();
+                        }
+                    }
+                }
             }
 
         }
 
         public static void UpdateProcessedOrders()
         {
-            //Populate processed table
-            for (int i = 0; i < OrderManager.GetProcessedOrders().Count; i++) //Loop through every order
+
+            if (OrderManager.GetProcessedOrders().Count <= 16)
             {
-                for (int x = 0; x < 5; x++) //Fill out information for each order
+                //Populate processed table
+                for (int i = 0; i < OrderManager.GetProcessedOrders().Count; i++) //Loop through every order
                 {
-                    Control c = processedOrdersTable.GetControlFromPosition(x, i + 1);
-
-                    if (x == 0) //Customer Name
+                    for (int x = 0; x < 5; x++) //Fill out information for each order
                     {
-                        c.Text = OrderManager.GetProcessedOrders()[i].GetName();
-                    }
-                    else if (x == 1) //Item Name
-                    {
-                        string itemNames = "";
+                        Control c = processedOrdersTable.GetControlFromPosition(x, i + 1);
 
-                        for (int q = 0; q < OrderManager.GetProcessedOrders()[i].GetCart().Count; q++)
+                        if (x == 0) //Customer Name
                         {
-                            if (q == OrderManager.GetProcessedOrders()[i].GetCart().Count - 1) //Last item in list
-                            {
-                                itemNames += OrderManager.GetProcessedOrders()[i].GetCart()[q].GetName();
-                            }
-                            else
-                            {
-                                itemNames += OrderManager.GetProcessedOrders()[i].GetCart()[q].GetName() + ", ";
-                            }
+                            c.Text = OrderManager.GetProcessedOrders()[i].GetName();
                         }
-                        c.Text = itemNames;
-                    }
-                    else if (x == 2) //Account Funds
-                    {
-                        c.Text = OrderManager.GetProcessedOrders()[i].GetFunds().ToString();
-                    }
-                    else if (x == 3) //Total Cost
-                    {
-                        c.Text = OrderManager.GetProcessedOrders()[i].GetCost().ToString();
-                    }
-                    else if (x == 4) //Order ID
-                    {
-                        c.Text = OrderManager.GetProcessedOrders()[i].GetOrderID().ToString();
+                        else if (x == 1) //Item Name
+                        {
+                            string itemNames = "";
+
+                            for (int q = 0; q < OrderManager.GetProcessedOrders()[i].GetCart().Count; q++)
+                            {
+                                if (q == OrderManager.GetProcessedOrders()[i].GetCart().Count - 1) //Last item in list
+                                {
+                                    itemNames += OrderManager.GetProcessedOrders()[i].GetCart()[q].GetName();
+                                }
+                                else
+                                {
+                                    itemNames += OrderManager.GetProcessedOrders()[i].GetCart()[q].GetName() + ", ";
+                                }
+                            }
+                            c.Text = itemNames;
+                        }
+                        else if (x == 2) //Account Funds
+                        {
+                            c.Text = OrderManager.GetProcessedOrders()[i].GetFunds().ToString();
+                        }
+                        else if (x == 3) //Total Cost
+                        {
+                            c.Text = OrderManager.GetProcessedOrders()[i].GetCost().ToString();
+                        }
+                        else if (x == 4) //Order ID
+                        {
+                            c.Text = OrderManager.GetProcessedOrders()[i].GetOrderID().ToString();
+                        }
                     }
                 }
             }
+            else //There are more than 16 orders that need to be drawn so draw the last 16 orders that were processed
+            {
+                //Populate processed table
+                for (int i = 0; i < 16; i++) //Loop through every order
+                {
+                    for (int x = 0; x < 5; x++) //Fill out information for each order
+                    {
+                        Control c = processedOrdersTable.GetControlFromPosition(x, i + 1);
+
+                        if (x == 0) //Customer Name
+                        {
+                            c.Text = OrderManager.GetProcessedOrders()[OrderManager.GetProcessedOrders().Count - i - 1].GetName();
+                        }
+                        else if (x == 1) //Item Name
+                        {
+                            string itemNames = "";
+
+                            for (int q = 0; q < OrderManager.GetProcessedOrders()[OrderManager.GetProcessedOrders().Count - i - 1].GetCart().Count; q++)
+                            {
+                                if (q == OrderManager.GetProcessedOrders()[OrderManager.GetProcessedOrders().Count - i - 1].GetCart().Count - 1) //Last item in list
+                                {
+                                    itemNames += OrderManager.GetProcessedOrders()[OrderManager.GetProcessedOrders().Count - i - 1].GetCart()[q].GetName();
+                                }
+                                else
+                                {
+                                    itemNames += OrderManager.GetProcessedOrders()[OrderManager.GetProcessedOrders().Count - i - 1].GetCart()[q].GetName() + ", ";
+                                }
+                            }
+                            c.Text = itemNames;
+                        }
+                        else if (x == 2) //Account Funds
+                        {
+                            c.Text = OrderManager.GetProcessedOrders()[OrderManager.GetProcessedOrders().Count - i - 1].GetFunds().ToString();
+                        }
+                        else if (x == 3) //Total Cost
+                        {
+                            c.Text = OrderManager.GetProcessedOrders()[OrderManager.GetProcessedOrders().Count - i - 1].GetCost().ToString();
+                        }
+                        else if (x == 4) //Order ID
+                        {
+                            c.Text = OrderManager.GetProcessedOrders()[OrderManager.GetProcessedOrders().Count - i - 1].GetOrderID().ToString();
+                        }
+                    }
+                }
+            }
+
+
         }
 
         public void UpdateProgramStats() //Update all program statistics
