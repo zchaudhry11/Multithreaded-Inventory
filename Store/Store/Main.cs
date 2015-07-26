@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
+using System.Threading;
 
 namespace Store
 {
@@ -26,6 +27,8 @@ namespace Store
         private string importedItemsFilePath; //String containing the path to the imported items
 
         public static Stopwatch OrderProcessTimer = new Stopwatch(); //Timer that keeps track of how long it takes to finish processing all orders
+
+        private static bool _enableMultipleThreads = true; //Flag that determines whether or not to use multi-threading
 
         public Main()
         {
@@ -491,6 +494,22 @@ namespace Store
                 Storefront.AddItem(itemToAdd);
                 UpdateStorefront();
             }
+        }
+
+        private void multiThreadCheckbox_CheckedChanged(object sender, EventArgs e)
+        {
+            if (multiThreadCheckbox.Checked == true)
+            {
+                _enableMultipleThreads = true;
+            } else
+            {
+                _enableMultipleThreads = false;
+            }
+        }
+
+        public static bool GetMultiThreadingState()
+        {
+            return _enableMultipleThreads;
         }
 
     }

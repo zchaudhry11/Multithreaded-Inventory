@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
 
 namespace Store
 {
@@ -11,17 +12,41 @@ namespace Store
         private static  List<Order> _canceledOrders = new List<Order>(); //List of all orders that were canceled
 
         //Thread queues that are used to process multiple orders at once
-        private static List<Order> thread1 = new List<Order>();
-        private static List<Order> thread2 = new List<Order>();
-        private static List<Order> thread3 = new List<Order>();
-        private static List<Order> thread4 = new List<Order>();
+        private static List<Order> _thread1Order = new List<Order>();
+        private static List<Order> _thread2Order = new List<Order>();
+        private static List<Order> _thread3Order = new List<Order>();
+        private static List<Order> _thread4Order = new List<Order>();
+
+        static Thread _thread1;
+
+        static readonly object locker = new object();
 
         public static int OrderID = 1;
 
         public static void AddOrder(Order newOrder)
         {
-            _individualOrders.Add(newOrder);
-            AddCart(_individualOrders, newOrder.GetQuantity());
+            List<Order> orderToProcess = new List<Order>();
+            if (Main.GetMultiThreadingState() == true) //Process orders with multiple threads
+            {
+                if (_thread1 == null)
+                {
+                    Trace.WriteLine("Made new thread!");
+                    _individualOrders.Add(newOrder);
+                    _thread1 = new Thread(() => AddCart(_individualOrders, newOrder.GetQuantity()));
+                    _thread1.Start();
+                }
+            } else //Process orders with single thread
+            {
+                _individualOrders.Add(newOrder);
+                AddCart(_individualOrders, newOrder.GetQuantity());
+            }
+
+            if (_thread1.IsAlive == false)
+            {
+                _thread1 = null;
+                Trace.WriteLine("RESET THREAD");
+            }
+
             Main.UpdateOrders(); //Update order UI
         }
         
@@ -29,6 +54,7 @@ namespace Store
         {
             int orderCounter = 0;
             int numOrders = _individualOrders.Count;
+
             //Loop through all orders and place items into carts to store in final task list
             while (orderCounter < numOrders)
             {
@@ -66,7 +92,7 @@ namespace Store
                 Order finalOrder = new Order(cartOrders[0].GetName(), items, cartOrders[0].GetFunds(), totalCost, OrderID);
                 _ordersToProcess.Add(finalOrder);
                 ProcessOrders(finalOrder, quantity);
-
+                
                 //Remove handled items from original list
                 for (int i = 0; i < cartOrders.Count; i++)
                 {
@@ -123,7 +149,7 @@ namespace Store
             }
             Main.OrderProcessTimer.Stop();
         }
-        
+
         public static List<Order> GetOrdersToProcess()
         {
             return _ordersToProcess;
