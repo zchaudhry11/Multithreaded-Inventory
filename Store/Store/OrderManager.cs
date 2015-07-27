@@ -18,6 +18,7 @@ namespace Store
         private static List<Order> _thread4Order = new List<Order>();
 
         static Thread _thread1;
+        static Thread _thread2;
 
         static readonly object locker = new object();
 
@@ -28,14 +29,30 @@ namespace Store
             List<Order> orderToProcess = new List<Order>();
             if (Main.GetMultiThreadingState() == true) //Process orders with multiple threads
             {
-                if (_thread1 == null)
+                Trace.WriteLine("Made new thread!");
+                _individualOrders.Add(newOrder);
+                _thread1 = new Thread(() => AddCart(_individualOrders, newOrder.GetQuantity()));
+                _thread1.Name = "Thread1";
+                _thread1.Start();
+
+                if (_thread1 != null)
                 {
-                    Trace.WriteLine("Made new thread!");
-                    _individualOrders.Add(newOrder);
-                    _thread1 = new Thread(() => AddCart(_individualOrders, newOrder.GetQuantity()));
-                    _thread1.Start();
+                    if (_thread1.IsAlive) //thread1 is busy
+                    {
+                        //Main thread or thread2
+                    }
+                    else
+                    {
+                        Trace.WriteLine("Made new thread1!");
+                        _individualOrders.Add(newOrder);
+                        _thread1 = new Thread(() => AddCart(_individualOrders, newOrder.GetQuantity()));
+                        _thread1.Name = "Thread1";
+                        _thread1.Start();
+                    }
                 }
-            } else //Process orders with single thread
+
+            }
+            else //Process orders with single thread
             {
                 _individualOrders.Add(newOrder);
                 AddCart(_individualOrders, newOrder.GetQuantity());
@@ -43,7 +60,6 @@ namespace Store
 
             if (_thread1.IsAlive == false)
             {
-                _thread1 = null;
                 Trace.WriteLine("RESET THREAD");
             }
 
@@ -81,7 +97,7 @@ namespace Store
                 //Place all items into cart
                 float totalCost = 0;
                 List<Item> items = new List<Item>();
-                
+
                 for (int i = 0; i < orders.Count; i++)
                 {
                     items.Add(cartOrders[i].GetItem());
@@ -92,7 +108,7 @@ namespace Store
                 Order finalOrder = new Order(cartOrders[0].GetName(), items, cartOrders[0].GetFunds(), totalCost, OrderID);
                 _ordersToProcess.Add(finalOrder);
                 ProcessOrders(finalOrder, quantity);
-                
+
                 //Remove handled items from original list
                 for (int i = 0; i < cartOrders.Count; i++)
                 {
@@ -109,45 +125,58 @@ namespace Store
 
         public static void ProcessOrders(Order orderToProcess, int quantity)
         {
-            //Check if the customer has enough funds
-            float totalCost = orderToProcess.GetCost(); //Total cost of this order
-            Customer buyer = CustomerManager.FindCustomer(orderToProcess.GetName()); //Get the customer who placed order
-
-            //If the customer has enough money and there are enough items in stock, process the order
-            if (buyer.GetFunds() >= totalCost && quantity <= Storefront.SearchInventory(orderToProcess.GetCart()[0].GetName()).GetQuantity())
+            lock (locker)
             {
-                //Subtract funds from customer's account and subtract from inventory quantity
-                buyer.SetFunds(buyer.GetFunds() - totalCost);
-                Item purchasedItem = Storefront.SearchInventory(orderToProcess.GetCart()[0].GetName()); //Get the item that the buyer purchased
+                if (Thread.CurrentThread.Name == "Thread1")
+                {
+                    Trace.WriteLine("THREAD1 MADE IT!");
+                }
+                //Check if the customer has enough funds
+                float totalCost = orderToProcess.GetCost(); //Total cost of this order
+                Customer buyer = CustomerManager.FindCustomer(orderToProcess.GetName()); //Get the customer who placed order
 
-                //Update quantity in the inventory
-                int newQuantity = purchasedItem.GetQuantity() - quantity;
-                Storefront.UpdateItemQuantity(purchasedItem.GetName(), newQuantity);
+                //If the customer has enough money and there are enough items in stock, process the order
+                if (buyer.GetFunds() >= totalCost && quantity <= Storefront.SearchInventory(orderToProcess.GetCart()[0].GetName()).GetQuantity())
+                {
+                    //Subtract funds from customer's account and subtract from inventory quantity
+                    buyer.SetFunds(buyer.GetFunds() - totalCost);
+                    Item purchasedItem = Storefront.SearchInventory(orderToProcess.GetCart()[0].GetName()); //Get the item that the buyer purchased
 
-                _processedOrders.Add(orderToProcess); //Add order to the processed list
+                    //Update quantity in the inventory
+                    int newQuantity = purchasedItem.GetQuantity() - quantity;
+                    Storefront.UpdateItemQuantity(purchasedItem.GetName(), newQuantity);
+
+                    _processedOrders.Add(orderToProcess); //Add order to the processed list
+                    Trace.WriteLine("----ORDER COMPLETED----");
+                }
+                else
+                {
+                    Item purchasedItem = Storefront.SearchInventory(orderToProcess.GetCart()[0].GetName());
+
+                    if (buyer.GetFunds() >= totalCost && quantity > purchasedItem.GetQuantity()) //Customer has enough money
+                    {
+                        Debug.WriteLine("There are not enough items in stock!");
+                        _canceledOrders.Add(orderToProcess);
+                    }
+                    if (buyer.GetFunds() < totalCost && quantity <= purchasedItem.GetQuantity()) //Not enough money
+                    {
+                        Debug.WriteLine("You don't have enough funds in your account.");
+                        _canceledOrders.Add(orderToProcess);
+                    }
+                    if (buyer.GetFunds() < totalCost && quantity > purchasedItem.GetQuantity()) //Not enough money or items
+                    {
+                        Debug.WriteLine("There are not enough items in stock!");
+                        Debug.WriteLine("You don't have enough funds in your account.");
+                        _canceledOrders.Add(orderToProcess);
+                    }
+                }
+                Main.OrderProcessTimer.Stop();
+                if (Thread.CurrentThread.Name == "Thread1")
+                {
+                    Trace.WriteLine("THREAD1 MADE IT TO THE END!");
+                    _thread1.Join();
+                }
             }
-            else
-            {
-                Item purchasedItem = Storefront.SearchInventory(orderToProcess.GetCart()[0].GetName());
-
-                if (buyer.GetFunds() >= totalCost && quantity > purchasedItem.GetQuantity()) //Customer has enough money
-                {
-                    Debug.WriteLine("There are not enough items in stock!");
-                    _canceledOrders.Add(orderToProcess);
-                }
-                if (buyer.GetFunds() < totalCost && quantity <= purchasedItem.GetQuantity()) //Not enough money
-                {
-                    Debug.WriteLine("You don't have enough funds in your account.");
-                    _canceledOrders.Add(orderToProcess);
-                }
-                if (buyer.GetFunds() < totalCost && quantity > purchasedItem.GetQuantity()) //Not enough money or items
-                {
-                    Debug.WriteLine("There are not enough items in stock!");
-                    Debug.WriteLine("You don't have enough funds in your account.");
-                    _canceledOrders.Add(orderToProcess);
-                }
-            }
-            Main.OrderProcessTimer.Stop();
         }
 
         public static List<Order> GetOrdersToProcess()

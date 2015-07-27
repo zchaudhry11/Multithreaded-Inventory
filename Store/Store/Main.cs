@@ -30,6 +30,8 @@ namespace Store
 
         private static bool _enableMultipleThreads = true; //Flag that determines whether or not to use multi-threading
 
+        private readonly object locker = new object();
+
         public Main()
         {
             InitializeComponent();
@@ -174,7 +176,7 @@ namespace Store
 
         public static void UpdateOrders()
         {
-            if (OrderManager.GetOrdersToProcess().Count <= 16)
+            if (OrderManager.GetOrdersToProcess().Count <= 15)
             {
                 //Populate orders to process table
                 for (int i = 0; i < OrderManager.GetOrdersToProcess().Count; i++) //Loop through every order
@@ -185,6 +187,7 @@ namespace Store
 
                         if (x == 0) //Customer Name
                         {
+                            Trace.WriteLine("CURR INDEX: " + i);
                             c.Text = OrderManager.GetOrdersToProcess()[i].GetName();
                         }
                         else if (x == 1) //Item Name
@@ -433,12 +436,14 @@ namespace Store
                 float totalCost = Storefront.SearchInventory(result[1]).GetPrice() * Convert.ToInt32(result[3]);
 
                 Customer buyer = CustomerManager.FindCustomer(result[0]);
+
                 if (buyer == null)
                 {
                     Order orderToAdd = new Order(result[0], Storefront.SearchInventory(result[1]), Convert.ToInt32(result[2]), Convert.ToInt32(result[3]), totalCost, OrderManager.GetOrdersToProcess().Count);
                     OrderManager.AddOrder(orderToAdd);
                     OrderProcessTimer.Start(); //Start the process timer
-                } else
+                }
+                else
                 {
                     Order orderToAdd = new Order(result[0], Storefront.SearchInventory(result[1]), buyer.GetFunds(), Convert.ToInt32(result[3]), totalCost, OrderManager.GetOrdersToProcess().Count);
                     OrderManager.AddOrder(orderToAdd);
