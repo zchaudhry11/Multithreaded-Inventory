@@ -417,6 +417,10 @@ namespace Store
 
             StreamReader openedFile = new StreamReader(path);
 
+            Thread timerThread = new Thread(() => StartMultiThreadedTimer());
+            timerThread.Name = "TimerThread";
+            bool timerThreadStarted = false;
+
             while (openedFile.EndOfStream == false)
             {
                 string line = openedFile.ReadLine();
@@ -441,14 +445,65 @@ namespace Store
                 {
                     Order orderToAdd = new Order(result[0], Storefront.SearchInventory(result[1]), Convert.ToInt32(result[2]), Convert.ToInt32(result[3]), totalCost, OrderManager.GetOrdersToProcess().Count);
                     OrderManager.AddOrder(orderToAdd);
-                    OrderProcessTimer.Start(); //Start the process timer
+
+                    //Keep track of process time
+                    if (_enableMultipleThreads)
+                    {
+                        if (timerThread.ThreadState == System.Threading.ThreadState.WaitSleepJoin) //Wake up timer thread if sleeping
+                        {
+                            timerThread.Interrupt();
+                        }
+
+                        if (timerThreadStarted == false)
+                        {
+                            timerThread.Start(); //Tell timer thread to start
+                            timerThreadStarted = true;
+                        }
+                    }
+                    else
+                    {
+                        OrderProcessTimer.Start(); //Start the process timer
+                    }
+
                 }
                 else
                 {
                     Order orderToAdd = new Order(result[0], Storefront.SearchInventory(result[1]), buyer.GetFunds(), Convert.ToInt32(result[3]), totalCost, OrderManager.GetOrdersToProcess().Count);
                     OrderManager.AddOrder(orderToAdd);
-                    OrderProcessTimer.Start(); //Start the process timer
+
+                    //Keep track of process time
+                    if (_enableMultipleThreads)
+                    {
+                        if (timerThread.ThreadState == System.Threading.ThreadState.WaitSleepJoin) //If timer thread is sleeping
+                        {
+                            timerThread.Interrupt();
+                        }
+                        if (timerThreadStarted == false)
+                        {
+                            timerThread.Start(); //Tell timer thread to start
+                            timerThreadStarted = true;
+                        }
+                        
+                    }
+                    else
+                    {
+                        OrderProcessTimer.Start(); //Start the process timer
+                    }
                 }
+
+                while(OrderManager.Thread1Executed == false)
+                {
+                    Thread.Sleep(1);
+                }
+
+                if (_enableMultipleThreads)
+                {
+                    StopMultiThreadedTimer();
+                    UpdateProcessedOrders();
+                    UpdateStorefront();
+                }
+
+                Trace.WriteLine("EXITED THREAD!");
             }
             OrderProcessTimer.Stop();
         }
@@ -515,6 +570,30 @@ namespace Store
         public static bool GetMultiThreadingState()
         {
             return _enableMultipleThreads;
+        }
+
+        public void StartMultiThreadedTimer()
+        {
+            while (Thread.CurrentThread.Name == "TimerThread") //Keep timer thread spinning until all orders are processed
+            {
+                if (OrderManager.Thread1Executed == true)
+                {
+                    OrderProcessTimer.Stop();
+                    Thread.Sleep(short.MaxValue); //Tell the timer thread to sleep until it is woken up
+                    Trace.WriteLine("TIMER THREAD FELL ASLEEP!");
+                }
+                else
+                {
+                    //Used to start timer by second worker thread to keep track of other worker thread speeds
+                    OrderProcessTimer.Start();
+                }
+            }
+
+        }
+
+        public void StopMultiThreadedTimer()
+        {
+            OrderProcessTimer.Stop();
         }
 
     }
