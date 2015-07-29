@@ -42,7 +42,7 @@ namespace Store
             List<Order> orderToProcess = new List<Order>();
             if (Main.GetMultiThreadingState() == true) //Process orders with multiple threads
             {
-                Trace.WriteLine("Made new thread!");
+               // Trace.WriteLine("Made new thread!");
                 _individualOrders.Add(newOrder);
                 _thread1 = new Thread(() => AddCart(_individualOrders, newOrder.GetQuantity()));
                 _thread1.Name = "Thread1";
@@ -56,7 +56,7 @@ namespace Store
                     }
                     else
                     {
-                        Trace.WriteLine("Made new thread1!");
+                       // Trace.WriteLine("Made new thread1!");
                         _individualOrders.Add(newOrder);
                         _thread1 = new Thread(() => AddCart(_individualOrders, newOrder.GetQuantity()));
                         _thread1.Name = "Thread1";
@@ -128,7 +128,7 @@ namespace Store
             if (Thread.CurrentThread.Name == "Thread1")
             {
                 Thread1Executed = true;
-                Trace.WriteLine("EXECUTED THREAD");
+               // Trace.WriteLine("EXECUTED THREAD");
                 _thread1.Join();
             }
 
@@ -145,7 +145,7 @@ namespace Store
         {
             if (Thread.CurrentThread.Name == "Thread1")
             {
-                Trace.WriteLine("THREAD1 MADE IT!");
+              //  Trace.WriteLine("THREAD1 MADE IT!");
             }
             //Check if the customer has enough funds
             float totalCost = orderToProcess.GetCost(); //Total cost of this order
@@ -163,7 +163,7 @@ namespace Store
                 Storefront.UpdateItemQuantity(purchasedItem.GetName(), newQuantity);
 
                 _processedOrders.Add(orderToProcess); //Add order to the processed list
-                Trace.WriteLine("----ORDER COMPLETED----");
+              //  Trace.WriteLine("----ORDER COMPLETED----");
             }
             else
             {
@@ -189,7 +189,7 @@ namespace Store
             Main.OrderProcessTimer.Stop();
             if (Thread.CurrentThread.Name == "Thread1")
             {
-                Trace.WriteLine("THREAD1 MADE IT TO THE END!");
+               // Trace.WriteLine("THREAD1 MADE IT TO THE END!");
             }
         }
 

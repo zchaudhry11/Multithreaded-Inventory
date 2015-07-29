@@ -187,7 +187,7 @@ namespace Store
 
                         if (x == 0) //Customer Name
                         {
-                            Trace.WriteLine("CURR INDEX: " + i);
+                            //Trace.WriteLine("CURR INDEX: " + i);
                             c.Text = OrderManager.GetOrdersToProcess()[i].GetName();
                         }
                         else if (x == 1) //Item Name
@@ -449,11 +449,6 @@ namespace Store
                     //Keep track of process time
                     if (_enableMultipleThreads)
                     {
-                        if (timerThread.ThreadState == System.Threading.ThreadState.WaitSleepJoin) //Wake up timer thread if sleeping
-                        {
-                            timerThread.Interrupt();
-                        }
-
                         if (timerThreadStarted == false)
                         {
                             timerThread.Start(); //Tell timer thread to start
@@ -464,7 +459,6 @@ namespace Store
                     {
                         OrderProcessTimer.Start(); //Start the process timer
                     }
-
                 }
                 else
                 {
@@ -483,7 +477,6 @@ namespace Store
                             timerThread.Start(); //Tell timer thread to start
                             timerThreadStarted = true;
                         }
-                        
                     }
                     else
                     {
@@ -503,7 +496,7 @@ namespace Store
                     UpdateStorefront();
                 }
 
-                Trace.WriteLine("EXITED THREAD!");
+               // Trace.WriteLine("EXITED THREAD!");
             }
             OrderProcessTimer.Stop();
         }
@@ -579,8 +572,7 @@ namespace Store
                 if (OrderManager.Thread1Executed == true)
                 {
                     OrderProcessTimer.Stop();
-                    Thread.Sleep(short.MaxValue); //Tell the timer thread to sleep until it is woken up
-                    Trace.WriteLine("TIMER THREAD FELL ASLEEP!");
+                    //Trace.WriteLine("TIMER THREAD FELL ASLEEP!");
                 }
                 else
                 {
