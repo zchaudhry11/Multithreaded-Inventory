@@ -419,13 +419,17 @@ namespace Store
 
             Thread timerThread = new Thread(() => StartMultiThreadedTimer());
             timerThread.Name = "TimerThread";
-            bool timerThreadStarted = false;
+            bool timerThreadStarted = false; //Flag used to start timer thread
+
+            //Worker thread 1
+            bool worker1Started = false; //Flag used to start first order processing thread
 
             while (openedFile.EndOfStream == false)
             {
                 string line = openedFile.ReadLine();
 
                 result = line.Split(delims); //Split string by delims
+                Trace.WriteLine("ORDER NAME: " + result[0]); 
 
                 //Remove extra space in each line
                 for (int i = 0; i < result.Length; i++)
@@ -444,7 +448,20 @@ namespace Store
                 if (buyer == null)
                 {
                     Order orderToAdd = new Order(result[0], Storefront.SearchInventory(result[1]), Convert.ToInt32(result[2]), Convert.ToInt32(result[3]), totalCost, OrderManager.GetOrdersToProcess().Count);
-                    OrderManager.AddOrder(orderToAdd);
+                    
+                    //If first order was given
+                    if (OrderManager._createdWorkerThread1 == false)
+                    {
+                        OrderManager.AddOrder(orderToAdd);
+                    } else
+                    {
+                        //Trace.WriteLine("Set up next order!");
+                        //Worker threads already exist so reset flag and pass new orders
+                        OrderManager.ResetWorkerThreads(orderToAdd);
+                        //OrderManager.NextOrder = orderToAdd;
+                        //OrderManager._orderFinished = false;
+                        //OrderManager.AddOrder(orderToAdd);
+                    }
 
                     //Keep track of process time
                     if (_enableMultipleThreads)
@@ -463,7 +480,20 @@ namespace Store
                 else
                 {
                     Order orderToAdd = new Order(result[0], Storefront.SearchInventory(result[1]), buyer.GetFunds(), Convert.ToInt32(result[3]), totalCost, OrderManager.GetOrdersToProcess().Count);
-                    OrderManager.AddOrder(orderToAdd);
+
+                    //If first order was given
+                    if (OrderManager._createdWorkerThread1 == false)
+                    {
+                        OrderManager.AddOrder(orderToAdd);
+                    }
+                    else
+                    {
+                        //Worker threads already exist so reset flag and pass new orders
+                        OrderManager.ResetWorkerThreads(orderToAdd);
+                        //OrderManager.NextOrder = orderToAdd;
+                        //OrderManager._orderFinished = false;
+                        //OrderManager.AddOrder(orderToAdd);
+                    }
 
                     //Keep track of process time
                     if (_enableMultipleThreads)
@@ -496,9 +526,11 @@ namespace Store
                     UpdateStorefront();
                 }
 
-               // Trace.WriteLine("EXITED THREAD!");
+                Trace.WriteLine("WOKE UP MAIN THREAD!");
             }
             OrderProcessTimer.Stop();
+            OrderManager.ResetWorkerThreads(null);
+            UpdateOrders();
         }
 
         private void importInventoryButton_Click(object sender, EventArgs e)

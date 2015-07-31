@@ -28,8 +28,16 @@ namespace Store
 
         private static bool _usingMultithread = true;
 
+        public static bool _orderFinished = false;
+        public static Order NextOrder = null;
+        public static bool _createdWorkerThread1 = false;
+
         public static void AddOrder(Order newOrder)
         {
+            if (NextOrder != null)
+            {
+                Trace.WriteLine("RESET");
+            }
             _usingMultithread = Main.GetMultiThreadingState();
             if (_usingMultithread)
             {
@@ -42,13 +50,24 @@ namespace Store
             List<Order> orderToProcess = new List<Order>();
             if (Main.GetMultiThreadingState() == true) //Process orders with multiple threads
             {
-               // Trace.WriteLine("Made new thread!");
-                _individualOrders.Add(newOrder);
-                _thread1 = new Thread(() => AddCart(_individualOrders, newOrder.GetQuantity()));
-                _thread1.Name = "Thread1";
-                _thread1.Start();
+                if (_createdWorkerThread1 == false)
+                {
+                    _createdWorkerThread1 = true;
+                    // Trace.WriteLine("Made new thread!");
+                    _individualOrders.Add(newOrder);
+                    _thread1 = new Thread(() => AddCart(_individualOrders, newOrder.GetQuantity()));
+                    _thread1.Name = "Thread1";
+                    _thread1.Start();
+                } else
+                {
+                    Trace.WriteLine("TESTING");
+                    //Worker thread already exists
+                    _individualOrders.Add(newOrder);
+                    AddCart(_individualOrders, newOrder.GetQuantity());
+                    
+                }
 
-                if (_thread1 != null)
+               /* if (_thread1 != null)
                 {
                     if (_thread1.IsAlive) //thread1 is busy
                     {
@@ -62,11 +81,12 @@ namespace Store
                         _thread1.Name = "Thread1";
                         _thread1.Start();
                     }
-                }
+                }*/
 
             }
             else //Process orders with single thread
             {
+                Trace.WriteLine("Using the main thread to process orders!");
                 _individualOrders.Add(newOrder);
                 AddCart(_individualOrders, newOrder.GetQuantity());
             }
@@ -127,9 +147,35 @@ namespace Store
 
             if (Thread.CurrentThread.Name == "Thread1")
             {
-                Thread1Executed = true;
-               // Trace.WriteLine("EXECUTED THREAD");
-                _thread1.Join();
+                // Trace.WriteLine("EXECUTED THREAD");
+
+                //Keep the thread alive
+                _orderFinished = true;
+                Order previousOrder = NextOrder;
+                Thread1Executed = true; //Wake up the main thread
+
+                while (NextOrder == previousOrder)
+                {
+                    int q = 0;
+                }
+
+                //Reset thread
+                Trace.WriteLine("--STARTING NEXT ORDER--");
+                if (NextOrder != previousOrder && NextOrder != null) //Check to see if there are any more orders that need to be handled
+                {
+                    Trace.WriteLine("ENTERED~~");
+                    AddOrder(NextOrder);
+                }
+                else
+                {
+                    if (NextOrder == null)
+                    {
+                        Trace.WriteLine("JOINING WORKER THREADS~~");
+                        _thread1.Join();
+                    }
+                }
+
+                //_thread1.Join();
             }
 
             if (_usingMultithread == false)
@@ -138,7 +184,6 @@ namespace Store
                 Main.UpdateProcessedOrders();
                 Main.UpdateStorefront();
             }
-
         }
 
         public static void ProcessOrders(Order orderToProcess, int quantity)
@@ -206,6 +251,12 @@ namespace Store
         public static List<Order> GetCanceledOrders()
         {
             return _canceledOrders;
+        }
+
+        public static void ResetWorkerThreads(Order newOrder)
+        {
+            NextOrder = newOrder;
+            _orderFinished = false;
         }
 
     }
