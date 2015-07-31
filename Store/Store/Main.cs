@@ -29,7 +29,7 @@ namespace Store
         public static Stopwatch OrderProcessTimer = new Stopwatch(); //Timer that keeps track of how long it takes to finish processing all orders
 
         private static bool _enableMultipleThreads = true; //Flag that determines whether or not to use multi-threading
-
+        private static bool _finishedProcessingOrdersFile = false;
         private readonly object locker = new object();
 
         public Main()
@@ -421,15 +421,11 @@ namespace Store
             timerThread.Name = "TimerThread";
             bool timerThreadStarted = false; //Flag used to start timer thread
 
-            //Worker thread 1
-            bool worker1Started = false; //Flag used to start first order processing thread
-
             while (openedFile.EndOfStream == false)
             {
                 string line = openedFile.ReadLine();
 
                 result = line.Split(delims); //Split string by delims
-                Trace.WriteLine("ORDER NAME: " + result[0]); 
 
                 //Remove extra space in each line
                 for (int i = 0; i < result.Length; i++)
@@ -452,15 +448,37 @@ namespace Store
                     //If first order was given
                     if (OrderManager._createdWorkerThread1 == false)
                     {
-                        OrderManager.AddOrder(orderToAdd);
+                        OrderManager.AddOrder(orderToAdd, 1);
                     } else
                     {
-                        //Trace.WriteLine("Set up next order!");
-                        //Worker threads already exist so reset flag and pass new orders
-                        OrderManager.ResetWorkerThreads(orderToAdd);
-                        //OrderManager.NextOrder = orderToAdd;
-                        //OrderManager._orderFinished = false;
-                        //OrderManager.AddOrder(orderToAdd);
+                        bool passedOrder = false; //Flag that is raised if an order is passed to thread2 if the first worker thread is busy
+
+                        while (OrderManager._thread1OrderFinished == false) //Wait until worker threads finish processing orders before passing another
+                        {
+                            Thread.Sleep(1);
+
+                            //If thread1 is still busy, pass the next order to thread2
+                            if (passedOrder == false)
+                            {
+                                if (OrderManager._createdWorkerThread2 == false)
+                                {
+                                    OrderManager.AddOrder(orderToAdd, 2);
+                                } else
+                                {
+                                    OrderManager.ResetWorkerThread2(orderToAdd);
+                                }
+                                passedOrder = true;
+                            }
+                        }
+
+                        if (passedOrder == false) //If order was not passed to thread2, then give it to thread1
+                        {
+                            //Worker threads already exist so reset flag and pass new orders
+                            OrderManager.ResetWorkerThread1(orderToAdd);
+                        } else
+                        {
+                            passedOrder = false;
+                        }
                     }
 
                     //Keep track of process time
@@ -484,15 +502,44 @@ namespace Store
                     //If first order was given
                     if (OrderManager._createdWorkerThread1 == false)
                     {
-                        OrderManager.AddOrder(orderToAdd);
+                        OrderManager.AddOrder(orderToAdd, 1);
                     }
                     else
                     {
-                        //Worker threads already exist so reset flag and pass new orders
-                        OrderManager.ResetWorkerThreads(orderToAdd);
-                        //OrderManager.NextOrder = orderToAdd;
-                        //OrderManager._orderFinished = false;
-                        //OrderManager.AddOrder(orderToAdd);
+                        bool passedOrder = false; //Flag that is raised if an order is passed to thread2 if the first worker thread is busy
+
+                        while (OrderManager._thread1OrderFinished == false) //Wait until worker threads finish processing orders before passing another
+                        {
+                            Thread.Sleep(1);
+
+                            //If thread1 is still busy, pass the next order to thread2
+                            if (passedOrder == false)
+                            {
+                                if (OrderManager._createdWorkerThread2 == false)
+                                {
+                                    OrderManager.AddOrder(orderToAdd, 2);
+                                }
+                                else
+                                {
+                                    while (OrderManager._thread2OrderFinished == false)
+                                    {
+                                        Thread.Sleep(1);
+                                    }
+                                    OrderManager.ResetWorkerThread2(orderToAdd);
+                                }
+                                passedOrder = true;
+                            }
+                        }
+
+                        if (passedOrder == false) //If order was not passed to thread2, then give it to thread1
+                        {
+                            //Worker threads already exist so reset flag and pass new orders
+                            OrderManager.ResetWorkerThread1(orderToAdd);
+                        }
+                        else
+                        {
+                            passedOrder = false;
+                        }
                     }
 
                     //Keep track of process time
@@ -522,15 +569,23 @@ namespace Store
                 if (_enableMultipleThreads)
                 {
                     StopMultiThreadedTimer();
+                    UpdateOrders();
                     UpdateProcessedOrders();
                     UpdateStorefront();
                 }
+                //Trace.WriteLine("WOKE UP MAIN THREAD!");
+            }
+            //Trace.WriteLine("MAIN THREAD FINISHED HANDING ORDERS!");
 
-                Trace.WriteLine("WOKE UP MAIN THREAD!");
+            if (_enableMultipleThreads)
+            {
+                OrderManager.ResetWorkerThread1(null);
+                OrderManager.ResetWorkerThread2(null);
+                _finishedProcessingOrdersFile = true;
+                Thread.Sleep(5);
+                timerThread.Join();
             }
             OrderProcessTimer.Stop();
-            OrderManager.ResetWorkerThreads(null);
-            UpdateOrders();
         }
 
         private void importInventoryButton_Click(object sender, EventArgs e)
@@ -610,6 +665,10 @@ namespace Store
                 {
                     //Used to start timer by second worker thread to keep track of other worker thread speeds
                     OrderProcessTimer.Start();
+                }
+                if (_finishedProcessingOrdersFile)
+                {
+                    break;
                 }
             }
 

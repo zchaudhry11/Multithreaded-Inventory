@@ -45,7 +45,7 @@ namespace Store
                     CustomerManager.AddCustomer(new Customer(temp.GetName(), temp.GetFunds(), CustomerManager.CustomerID));
                 }
 
-                OrderManager.AddOrder(temp); //Add order to list
+                OrderManager.AddOrder(temp, 1); //Add order to list
             }
 
             this.Close();

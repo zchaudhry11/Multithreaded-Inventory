@@ -20,34 +20,42 @@ namespace Store
         private static Thread _thread1;
         private static Thread _thread2;
 
-        static readonly object locker = new object();
+        private static readonly object locker = new object();
 
         public static int OrderID = 1;
 
-        public static bool Thread1Executed = false; //Flags that are raised when worker threads finish executing
+        //Flags that are raised when worker threads finish executing
+        public static bool Thread1Executed = false;
+        public static bool Thread2Executed = false;
 
         private static bool _usingMultithread = true;
 
-        public static bool _orderFinished = false;
-        public static Order NextOrder = null;
-        public static bool _createdWorkerThread1 = false;
+        //Worker Thread 1
+        public static bool _thread1OrderFinished = false; //Raised when worker thread 1 completes all available orders
+        public static Order NextOrder = null; //Next order in the queue for worker thread 1
+        public static bool _createdWorkerThread1 = false; //Raised when worker thread 1 is first initialized
 
-        public static void AddOrder(Order newOrder)
+        //Worker Thread 2
+        public static bool _thread2OrderFinished = false; //Raised when worker thread 2 completes all available orders
+        public static Order NextOrder2 = null; //Next order in the queue for worker thread 2
+        public static bool _createdWorkerThread2 = false;//Raised when worker thread 2 is first initialized
+
+        public static void AddOrder(Order newOrder, int thread)
         {
-            if (NextOrder != null)
-            {
-                Trace.WriteLine("RESET");
-            }
-            _usingMultithread = Main.GetMultiThreadingState();
+            _usingMultithread = Main.GetMultiThreadingState(); //Check if multiple threads will be used
+
             if (_usingMultithread)
             {
                 Thread1Executed = false;
+                Thread2Executed = false;
             } else
             {
                 Thread1Executed = true;
+                Thread2Executed = true;
             }
             
             List<Order> orderToProcess = new List<Order>();
+
             if (Main.GetMultiThreadingState() == true) //Process orders with multiple threads
             {
                 if (_createdWorkerThread1 == false)
@@ -60,29 +68,30 @@ namespace Store
                     _thread1.Start();
                 } else
                 {
-                    Trace.WriteLine("TESTING");
-                    //Worker thread already exists
-                    _individualOrders.Add(newOrder);
-                    AddCart(_individualOrders, newOrder.GetQuantity());
-                    
-                }
-
-               /* if (_thread1 != null)
-                {
-                    if (_thread1.IsAlive) //thread1 is busy
+                    if (thread == 1)
                     {
-                        //Main thread or thread2
-                    }
-                    else
-                    {
-                       // Trace.WriteLine("Made new thread1!");
+                        //Worker thread 1 already exists
                         _individualOrders.Add(newOrder);
-                        _thread1 = new Thread(() => AddCart(_individualOrders, newOrder.GetQuantity()));
-                        _thread1.Name = "Thread1";
-                        _thread1.Start();
+                        AddCart(_individualOrders, newOrder.GetQuantity());
                     }
-                }*/
-
+                }
+                if (_createdWorkerThread2 == false && thread == 2)
+                {
+                    _createdWorkerThread2 = true;
+                    // Trace.WriteLine("Made new thread!");
+                    _individualOrders.Add(newOrder);
+                    _thread2 = new Thread(() => AddCart(_individualOrders, newOrder.GetQuantity()));
+                    _thread2.Name = "Thread2";
+                    _thread2.Start();
+                } else
+                {
+                    if (thread == 2)
+                    {
+                        //Worker thread 2 already exists
+                        _individualOrders.Add(newOrder);
+                        AddCart(_individualOrders, newOrder.GetQuantity());
+                    }
+                }
             }
             else //Process orders with single thread
             {
@@ -147,35 +156,57 @@ namespace Store
 
             if (Thread.CurrentThread.Name == "Thread1")
             {
-                // Trace.WriteLine("EXECUTED THREAD");
-
                 //Keep the thread alive
-                _orderFinished = true;
                 Order previousOrder = NextOrder;
                 Thread1Executed = true; //Wake up the main thread
 
-                while (NextOrder == previousOrder)
+                while (NextOrder == previousOrder) //Stall the worker threads until the next order is ready to be processed
                 {
-                    int q = 0;
+                    _thread1OrderFinished = true;
                 }
 
                 //Reset thread
-                Trace.WriteLine("--STARTING NEXT ORDER--");
+                //Trace.WriteLine("--STARTING NEXT ORDER--");
                 if (NextOrder != previousOrder && NextOrder != null) //Check to see if there are any more orders that need to be handled
                 {
-                    Trace.WriteLine("ENTERED~~");
-                    AddOrder(NextOrder);
+                    AddOrder(NextOrder, 1);
                 }
                 else
                 {
                     if (NextOrder == null)
                     {
-                        Trace.WriteLine("JOINING WORKER THREADS~~");
+                        //Trace.WriteLine("JOINING WORKER THREADS");
                         _thread1.Join();
                     }
                 }
+            }
 
-                //_thread1.Join();
+            else if (Thread.CurrentThread.Name == "Thread2")
+            {
+                //Keep the thread alive
+                Order previousOrder = NextOrder2;
+                Thread2Executed = true;
+
+                while (NextOrder2 == previousOrder)
+                {
+                    _thread2OrderFinished = true;
+                }
+
+                //Reset thread
+                //Trace.WriteLine("--STARTING NEXT ORDER IN THREAD 2--");
+
+                if (NextOrder2 != previousOrder && NextOrder2 != null) //Check to see if there are any more orders that need to be handled
+                {
+                    AddOrder(NextOrder2, 2);
+                }
+                else
+                {
+                    if (NextOrder2 == null)
+                    {
+                        //Trace.WriteLine("JOINING WORKER THREAD 2");
+                        _thread2.Join();
+                    }
+                }
             }
 
             if (_usingMultithread == false)
@@ -192,6 +223,7 @@ namespace Store
             {
               //  Trace.WriteLine("THREAD1 MADE IT!");
             }
+
             //Check if the customer has enough funds
             float totalCost = orderToProcess.GetCost(); //Total cost of this order
             Customer buyer = CustomerManager.FindCustomer(orderToProcess.GetName()); //Get the customer who placed order
@@ -253,10 +285,16 @@ namespace Store
             return _canceledOrders;
         }
 
-        public static void ResetWorkerThreads(Order newOrder)
+        public static void ResetWorkerThread1(Order newOrder)
         {
             NextOrder = newOrder;
-            _orderFinished = false;
+            _thread1OrderFinished = false;
+        }
+
+        public static void ResetWorkerThread2(Order newOrder)
+        {
+            NextOrder2 = newOrder;
+            _thread2OrderFinished = false;
         }
 
     }
