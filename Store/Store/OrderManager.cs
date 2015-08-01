@@ -95,7 +95,8 @@ namespace Store
             }
             else //Process orders with single thread
             {
-                Trace.WriteLine("Using the main thread to process orders!");
+                //Trace.WriteLine("Using the main thread to process orders!");
+                Main.OrderProcessTimer.Start();
                 _individualOrders.Add(newOrder);
                 AddCart(_individualOrders, newOrder.GetQuantity());
             }
@@ -211,7 +212,6 @@ namespace Store
 
             if (_usingMultithread == false)
             {
-                Main.OrderProcessTimer.Stop();
                 Main.UpdateProcessedOrders();
                 Main.UpdateStorefront();
             }
@@ -219,11 +219,6 @@ namespace Store
 
         public static void ProcessOrders(Order orderToProcess, int quantity)
         {
-            if (Thread.CurrentThread.Name == "Thread1")
-            {
-              //  Trace.WriteLine("THREAD1 MADE IT!");
-            }
-
             //Check if the customer has enough funds
             float totalCost = orderToProcess.GetCost(); //Total cost of this order
             Customer buyer = CustomerManager.FindCustomer(orderToProcess.GetName()); //Get the customer who placed order
@@ -262,11 +257,6 @@ namespace Store
                     Debug.WriteLine("You don't have enough funds in your account.");
                     _canceledOrders.Add(orderToProcess);
                 }
-            }
-            Main.OrderProcessTimer.Stop();
-            if (Thread.CurrentThread.Name == "Thread1")
-            {
-               // Trace.WriteLine("THREAD1 MADE IT TO THE END!");
             }
         }
 

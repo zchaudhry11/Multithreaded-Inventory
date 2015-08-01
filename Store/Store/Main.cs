@@ -417,6 +417,7 @@ namespace Store
 
             StreamReader openedFile = new StreamReader(path);
 
+
             Thread timerThread = new Thread(() => StartMultiThreadedTimer());
             timerThread.Name = "TimerThread";
             bool timerThreadStarted = false; //Flag used to start timer thread
@@ -448,6 +449,12 @@ namespace Store
                     //If first order was given
                     if (OrderManager._createdWorkerThread1 == false)
                     {
+
+                        if (_enableMultipleThreads == false) //Enable timer for single-thread mode
+                        {
+                            OrderProcessTimer.Start();
+                        }
+
                         OrderManager.AddOrder(orderToAdd, 1);
                     } else
                     {
@@ -484,6 +491,10 @@ namespace Store
                     //Keep track of process time
                     if (_enableMultipleThreads)
                     {
+                        if (timerThread.ThreadState == System.Threading.ThreadState.WaitSleepJoin) //If timer thread is sleeping
+                        {
+                            timerThread.Interrupt();
+                        }
                         if (timerThreadStarted == false)
                         {
                             timerThread.Start(); //Tell timer thread to start
