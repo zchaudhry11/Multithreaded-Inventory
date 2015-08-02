@@ -184,6 +184,7 @@ namespace Store
 
             else if (Thread.CurrentThread.Name == "Thread2")
             {
+                Trace.WriteLine("PROCESSED ORDER WITH THREAD2");
                 //Keep the thread alive
                 Order previousOrder = NextOrder2;
                 Thread2Executed = true;
@@ -253,8 +254,7 @@ namespace Store
                 }
                 if (buyer.GetFunds() < totalCost && quantity > purchasedItem.GetQuantity()) //Not enough money or items
                 {
-                    Debug.WriteLine("There are not enough items in stock!");
-                    Debug.WriteLine("You don't have enough funds in your account.");
+                    Debug.WriteLine("There are not enough items in stock and you don't have enough funds in your account!");
                     _canceledOrders.Add(orderToProcess);
                 }
             }

@@ -417,35 +417,21 @@ namespace Store
 
             StreamReader openedFile = new StreamReader(path);
 
-
             Thread timerThread = new Thread(() => StartMultiThreadedTimer());
             timerThread.Name = "TimerThread";
             bool timerThreadStarted = false; //Flag used to start timer thread
 
-            while (openedFile.EndOfStream == false)
+            List<Order> ordersToProcess = BuildOrdersFromFile(path);
+            
+            for (int i = 0; i < ordersToProcess.Count; i++)
             {
-                string line = openedFile.ReadLine();
-
-                result = line.Split(delims); //Split string by delims
-
-                //Remove extra space in each line
-                for (int i = 0; i < result.Length; i++)
-                {
-                    if (result[i][0] == ' ')
-                    {
-                        result[i] = result[i].Substring(1);
-                    }
-                }
-
                 //Create order from file and add to order queue
-                float totalCost = Storefront.SearchInventory(result[1]).GetPrice() * Convert.ToInt32(result[3]);
+                float totalCost = Storefront.SearchInventory(ordersToProcess[i].GetItem().GetName()).GetPrice() * Convert.ToInt32(ordersToProcess[i].GetQuantity());
 
-                Customer buyer = CustomerManager.FindCustomer(result[0]);
+                Customer buyer = CustomerManager.FindCustomer(ordersToProcess[i].GetName());
 
                 if (buyer == null)
                 {
-                    Order orderToAdd = new Order(result[0], Storefront.SearchInventory(result[1]), Convert.ToInt32(result[2]), Convert.ToInt32(result[3]), totalCost, OrderManager.GetOrdersToProcess().Count);
-                    
                     //If first order was given
                     if (OrderManager._createdWorkerThread1 == false)
                     {
@@ -455,8 +441,9 @@ namespace Store
                             OrderProcessTimer.Start();
                         }
 
-                        OrderManager.AddOrder(orderToAdd, 1);
-                    } else
+                        OrderManager.AddOrder(ordersToProcess[i], 1);
+                    }
+                    else
                     {
                         bool passedOrder = false; //Flag that is raised if an order is passed to thread2 if the first worker thread is busy
 
@@ -469,10 +456,11 @@ namespace Store
                             {
                                 if (OrderManager._createdWorkerThread2 == false)
                                 {
-                                    OrderManager.AddOrder(orderToAdd, 2);
-                                } else
+                                    OrderManager.AddOrder(ordersToProcess[i], 2);
+                                }
+                                else
                                 {
-                                    OrderManager.ResetWorkerThread2(orderToAdd);
+                                    OrderManager.ResetWorkerThread2(ordersToProcess[i]);
                                 }
                                 passedOrder = true;
                             }
@@ -481,8 +469,9 @@ namespace Store
                         if (passedOrder == false) //If order was not passed to thread2, then give it to thread1
                         {
                             //Worker threads already exist so reset flag and pass new orders
-                            OrderManager.ResetWorkerThread1(orderToAdd);
-                        } else
+                            OrderManager.ResetWorkerThread1(ordersToProcess[i]);
+                        }
+                        else
                         {
                             passedOrder = false;
                         }
@@ -508,12 +497,13 @@ namespace Store
                 }
                 else
                 {
-                    Order orderToAdd = new Order(result[0], Storefront.SearchInventory(result[1]), buyer.GetFunds(), Convert.ToInt32(result[3]), totalCost, OrderManager.GetOrdersToProcess().Count);
+                    //Obtain buyer's account history
+                    ordersToProcess[i].SetFunds(buyer.GetFunds());
 
                     //If first order was given
                     if (OrderManager._createdWorkerThread1 == false)
                     {
-                        OrderManager.AddOrder(orderToAdd, 1);
+                        OrderManager.AddOrder(ordersToProcess[i], 1);
                     }
                     else
                     {
@@ -528,7 +518,7 @@ namespace Store
                             {
                                 if (OrderManager._createdWorkerThread2 == false)
                                 {
-                                    OrderManager.AddOrder(orderToAdd, 2);
+                                    OrderManager.AddOrder(ordersToProcess[i], 2);
                                 }
                                 else
                                 {
@@ -536,7 +526,7 @@ namespace Store
                                     {
                                         Thread.Sleep(1);
                                     }
-                                    OrderManager.ResetWorkerThread2(orderToAdd);
+                                    OrderManager.ResetWorkerThread2(ordersToProcess[i]);
                                 }
                                 passedOrder = true;
                             }
@@ -545,7 +535,7 @@ namespace Store
                         if (passedOrder == false) //If order was not passed to thread2, then give it to thread1
                         {
                             //Worker threads already exist so reset flag and pass new orders
-                            OrderManager.ResetWorkerThread1(orderToAdd);
+                            OrderManager.ResetWorkerThread1(ordersToProcess[i]);
                         }
                         else
                         {
@@ -572,7 +562,7 @@ namespace Store
                     }
                 }
 
-                while(OrderManager.Thread1Executed == false)
+                while (OrderManager.Thread1Executed == false)
                 {
                     Thread.Sleep(1);
                 }
@@ -597,6 +587,44 @@ namespace Store
                 timerThread.Join();
             }
             OrderProcessTimer.Stop();
+        }
+
+        private List<Order> BuildOrdersFromFile(string path)
+        {
+            char[] delims = new char[] { ',' };
+            string[] result;
+
+            List<Order> builtOrders = new List<Order>();
+
+            StreamReader openedFile = new StreamReader(path);
+
+            while (openedFile.EndOfStream == false)
+            {
+                string line = openedFile.ReadLine();
+
+                result = line.Split(delims); //Split string by delims
+
+                //Remove extra space in each line
+                for (int i = 0; i < result.Length; i++)
+                {
+                    if (result[i][0] == ' ')
+                    {
+                        result[i] = result[i].Substring(1);
+                    }
+                }
+
+                //Create order from file and add to order queue
+                float totalCost = Storefront.SearchInventory(result[1]).GetPrice() * Convert.ToInt32(result[3]);
+                
+                Order orderToAdd = new Order(result[0], Storefront.SearchInventory(result[1]), Convert.ToInt32(result[2]), Convert.ToInt32(result[3]), totalCost, OrderManager.GetOrdersToProcess().Count);
+
+                if (orderToAdd != null)
+                {
+                    builtOrders.Add(orderToAdd);
+                }
+
+            }
+            return builtOrders;
         }
 
         private void importInventoryButton_Click(object sender, EventArgs e)
