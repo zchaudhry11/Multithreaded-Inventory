@@ -36,9 +36,12 @@ namespace Store
         public static bool _createdWorkerThread1 = false; //Raised when worker thread 1 is first initialized
 
         //Worker Thread 2
-        public static bool _thread2OrderFinished = false; //Raised when worker thread 2 completes all available orders
+        public static bool _thread2OrderFinished = true; //Raised when worker thread 2 completes all available orders
         public static Order NextOrder2 = null; //Next order in the queue for worker thread 2
         public static bool _createdWorkerThread2 = false;//Raised when worker thread 2 is first initialized
+
+        public static int ordersBy1 = 0;
+        public static int ordersBy2 = 0;
 
         public static void AddOrder(Order newOrder, int thread)
         {
@@ -66,7 +69,8 @@ namespace Store
                     _thread1 = new Thread(() => AddCart(_individualOrders, newOrder.GetQuantity()));
                     _thread1.Name = "Thread1";
                     _thread1.Start();
-                } else
+                }
+                else
                 {
                     if (thread == 1)
                     {
@@ -78,12 +82,12 @@ namespace Store
                 if (_createdWorkerThread2 == false && thread == 2)
                 {
                     _createdWorkerThread2 = true;
-                    // Trace.WriteLine("Made new thread!");
                     _individualOrders.Add(newOrder);
                     _thread2 = new Thread(() => AddCart(_individualOrders, newOrder.GetQuantity()));
                     _thread2.Name = "Thread2";
                     _thread2.Start();
-                } else
+                }
+                else
                 {
                     if (thread == 2)
                     {
@@ -153,6 +157,8 @@ namespace Store
                     _individualOrders.Remove(cartOrders[i]);
                 }
                 OrderID++; //Set new order ID for new customer
+                Main.initializedWorker1 = true;
+                Main.initializedWorker2 = true;
             }
 
             if (Thread.CurrentThread.Name == "Thread1")
@@ -160,6 +166,8 @@ namespace Store
                 //Keep the thread alive
                 Order previousOrder = NextOrder;
                 Thread1Executed = true; //Wake up the main thread
+                Main.AllThreadsBusy = false;
+                ordersBy1++;
 
                 while (NextOrder == previousOrder) //Stall the worker threads until the next order is ready to be processed
                 {
@@ -184,10 +192,12 @@ namespace Store
 
             else if (Thread.CurrentThread.Name == "Thread2")
             {
-                Trace.WriteLine("PROCESSED ORDER WITH THREAD2");
+                //Trace.WriteLine("THREAD 2 ENTERED");
                 //Keep the thread alive
                 Order previousOrder = NextOrder2;
                 Thread2Executed = true;
+                Main.AllThreadsBusy = false;
+                ordersBy2++;
 
                 while (NextOrder2 == previousOrder)
                 {
@@ -236,7 +246,7 @@ namespace Store
                 Storefront.UpdateItemQuantity(purchasedItem.GetName(), newQuantity);
 
                 _processedOrders.Add(orderToProcess); //Add order to the processed list
-              //  Trace.WriteLine("----ORDER COMPLETED----");
+                //Trace.WriteLine("----ORDER COMPLETED----");
             }
             else
             {
@@ -244,17 +254,17 @@ namespace Store
 
                 if (buyer.GetFunds() >= totalCost && quantity > purchasedItem.GetQuantity()) //Customer has enough money
                 {
-                    Debug.WriteLine("There are not enough items in stock!");
+                    //Debug.WriteLine("There are not enough items in stock!");
                     _canceledOrders.Add(orderToProcess);
                 }
                 if (buyer.GetFunds() < totalCost && quantity <= purchasedItem.GetQuantity()) //Not enough money
                 {
-                    Debug.WriteLine("You don't have enough funds in your account.");
+                    //Debug.WriteLine("You don't have enough funds in your account.");
                     _canceledOrders.Add(orderToProcess);
                 }
                 if (buyer.GetFunds() < totalCost && quantity > purchasedItem.GetQuantity()) //Not enough money or items
                 {
-                    Debug.WriteLine("There are not enough items in stock and you don't have enough funds in your account!");
+                    //Debug.WriteLine("There are not enough items in stock and you don't have enough funds in your account!");
                     _canceledOrders.Add(orderToProcess);
                 }
             }
