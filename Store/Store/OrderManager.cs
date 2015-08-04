@@ -11,15 +11,6 @@ namespace Store
         private static List<Order> _processedOrders = new List<Order>(); //List of orders that have been completed
         private static  List<Order> _canceledOrders = new List<Order>(); //List of all orders that were canceled
 
-        //Thread queues that are used to process multiple orders at once
-        private static List<Order> _thread1Order = new List<Order>();
-        private static List<Order> _thread2Order = new List<Order>();
-        private static List<Order> _thread3Order = new List<Order>();
-        private static List<Order> _thread4Order = new List<Order>();
-
-        private static Thread _thread1;
-        private static Thread _thread2;
-
         private static readonly object locker = new object();
 
         public static int OrderID = 1;
@@ -27,21 +18,40 @@ namespace Store
         //Flags that are raised when worker threads finish executing
         public static bool Thread1Executed = false;
         public static bool Thread2Executed = false;
+        public static bool Thread3Executed = false;
+        public static bool Thread4Executed = false;
 
         private static bool _usingMultithread = true;
-
+        
         //Worker Thread 1
+        private static Thread _thread1;
         public static bool _thread1OrderFinished = false; //Raised when worker thread 1 completes all available orders
         public static Order NextOrder = null; //Next order in the queue for worker thread 1
         public static bool _createdWorkerThread1 = false; //Raised when worker thread 1 is first initialized
 
         //Worker Thread 2
+        private static Thread _thread2;
         public static bool _thread2OrderFinished = true; //Raised when worker thread 2 completes all available orders
         public static Order NextOrder2 = null; //Next order in the queue for worker thread 2
         public static bool _createdWorkerThread2 = false;//Raised when worker thread 2 is first initialized
 
+        //Worker Thread 3
+        private static Thread _thread3;
+        public static bool _thread3OrderFinished = true; //Raised when worker thread 3 completes all available orders
+        public static Order NextOrder3 = null; //Next order in the queue for worker thread 3
+        public static bool _createdWorkerThread3 = false;//Raised when worker thread 3 is first initialized
+
+        //Worker Thread 4
+        private static Thread _thread4;
+        public static bool _thread4OrderFinished = true; //Raised when worker thread 4 completes all available orders
+        public static Order NextOrder4 = null; //Next order in the queue for worker thread 4
+        public static bool _createdWorkerThread4 = false;//Raised when worker thread 4 is first initialized
+
+        //Store the amount of orders processed by each thread
         public static int ordersBy1 = 0;
         public static int ordersBy2 = 0;
+        public static int ordersBy3 = 0;
+        public static int ordersBy4 = 0;
 
         public static void AddOrder(Order newOrder, int thread)
         {
@@ -51,16 +61,21 @@ namespace Store
             {
                 Thread1Executed = false;
                 Thread2Executed = false;
+                Thread3Executed = false;
+                Thread4Executed = false;
             } else
             {
                 Thread1Executed = true;
                 Thread2Executed = true;
+                Thread3Executed = true;
+                Thread4Executed = true;
             }
             
             List<Order> orderToProcess = new List<Order>();
 
             if (Main.GetMultiThreadingState() == true) //Process orders with multiple threads
             {
+                //Worker thread 1
                 if (_createdWorkerThread1 == false)
                 {
                     _createdWorkerThread1 = true;
@@ -79,6 +94,7 @@ namespace Store
                         AddCart(_individualOrders, newOrder.GetQuantity());
                     }
                 }
+                //Worker thread 2
                 if (_createdWorkerThread2 == false && thread == 2)
                 {
                     _createdWorkerThread2 = true;
@@ -96,7 +112,44 @@ namespace Store
                         AddCart(_individualOrders, newOrder.GetQuantity());
                     }
                 }
+                //Worker thread 3
+                if (_createdWorkerThread3 == false && thread == 3)
+                {
+                    _createdWorkerThread3 = true;
+                    _individualOrders.Add(newOrder);
+                    _thread3 = new Thread(() => AddCart(_individualOrders, newOrder.GetQuantity()));
+                    _thread3.Name = "Thread3";
+                    _thread3.Start();
+                }
+                else
+                {
+                    if (thread == 3)
+                    {
+                        //Worker thread 3 already exists
+                        _individualOrders.Add(newOrder);
+                        AddCart(_individualOrders, newOrder.GetQuantity());
+                    }
+                }
+                //Worker thread 4
+                if (_createdWorkerThread4 == false && thread == 4)
+                {
+                    _createdWorkerThread4 = true;
+                    _individualOrders.Add(newOrder);
+                    _thread4 = new Thread(() => AddCart(_individualOrders, newOrder.GetQuantity()));
+                    _thread4.Name = "Thread4";
+                    _thread4.Start();
+                }
+                else
+                {
+                    if (thread == 4)
+                    {
+                        //Worker thread 4 already exists
+                        _individualOrders.Add(newOrder);
+                        AddCart(_individualOrders, newOrder.GetQuantity());
+                    }
+                }
             }
+
             else //Process orders with single thread
             {
                 //Trace.WriteLine("Using the main thread to process orders!");
@@ -157,8 +210,6 @@ namespace Store
                     _individualOrders.Remove(cartOrders[i]);
                 }
                 OrderID++; //Set new order ID for new customer
-                Main.initializedWorker1 = true;
-                Main.initializedWorker2 = true;
             }
 
             if (Thread.CurrentThread.Name == "Thread1")
@@ -217,6 +268,68 @@ namespace Store
                     {
                         //Trace.WriteLine("JOINING WORKER THREAD 2");
                         _thread2.Join();
+                    }
+                }
+            }
+
+            else if (Thread.CurrentThread.Name == "Thread3")
+            {
+                //Trace.WriteLine("THREAD 3 ENTERED");
+                //Keep the thread alive
+                Order previousOrder = NextOrder3;
+                Thread3Executed = true;
+                Main.AllThreadsBusy = false;
+                ordersBy3++;
+
+                while (NextOrder3 == previousOrder)
+                {
+                    _thread3OrderFinished = true;
+                }
+
+                //Reset thread
+                //Trace.WriteLine("--STARTING NEXT ORDER IN THREAD 3--");
+
+                if (NextOrder3 != previousOrder && NextOrder3 != null) //Check to see if there are any more orders that need to be handled
+                {
+                    AddOrder(NextOrder3, 3);
+                }
+                else
+                {
+                    if (NextOrder3 == null)
+                    {
+                        //Trace.WriteLine("JOINING WORKER THREAD 3");
+                        _thread3.Join();
+                    }
+                }
+            }
+
+            else if (Thread.CurrentThread.Name == "Thread4")
+            {
+                //Trace.WriteLine("THREAD 4 ENTERED");
+                //Keep the thread alive
+                Order previousOrder = NextOrder4;
+                Thread4Executed = true;
+                Main.AllThreadsBusy = false;
+                ordersBy4++;
+
+                while (NextOrder4 == previousOrder)
+                {
+                    _thread4OrderFinished = true;
+                }
+
+                //Reset thread
+                //Trace.WriteLine("--STARTING NEXT ORDER IN THREAD 4--");
+
+                if (NextOrder4 != previousOrder && NextOrder4 != null) //Check to see if there are any more orders that need to be handled
+                {
+                    AddOrder(NextOrder4, 4);
+                }
+                else
+                {
+                    if (NextOrder4 == null)
+                    {
+                        //Trace.WriteLine("JOINING WORKER THREAD 4");
+                        _thread4.Join();
                     }
                 }
             }
@@ -295,6 +408,18 @@ namespace Store
         {
             NextOrder2 = newOrder;
             _thread2OrderFinished = false;
+        }
+
+        public static void ResetWorkerThread3(Order newOrder)
+        {
+            NextOrder3 = newOrder;
+            _thread3OrderFinished = false;
+        }
+
+        public static void ResetWorkerThread4(Order newOrder)
+        {
+            NextOrder4 = newOrder;
+            _thread4OrderFinished = false;
         }
 
     }

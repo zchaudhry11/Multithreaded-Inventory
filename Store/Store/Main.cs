@@ -26,14 +26,11 @@ namespace Store
         private string importedOrdersFilePath; //String containing the path to the imported orders
         private string importedItemsFilePath; //String containing the path to the imported items
 
-        public static Stopwatch OrderProcessTimer = new Stopwatch(); //Timer that keeps track of how long it takes to finish processing all orders
+        public static Stopwatch OrderProcessTimer = new Stopwatch(); //Timer that keeps track of how long it takes to finish processing all orders on thread 1
 
         private static bool _enableMultipleThreads = true; //Flag that determines whether or not to use multi-threading
         private static bool _finishedProcessingOrdersFile = false;
         public static bool AllThreadsBusy = false; //Raised when all worker threads are currently busy
-
-        public static bool initializedWorker1 = false;
-        public static bool initializedWorker2 = false;
 
         public Main()
         {
@@ -420,19 +417,21 @@ namespace Store
 
             StreamReader openedFile = new StreamReader(path);
 
-            Thread timerThread = new Thread(() => StartMultiThreadedTimer());
-            timerThread.Name = "TimerThread";
-            bool timerThreadStarted = false; //Flag used to start timer thread
-
             List<Order> ordersToProcess = BuildOrdersFromFile(path);
-            
+
             for (int i = 0; i < ordersToProcess.Count; i++)
             {
+                OrderProcessTimer.Start(); //Start the process timer
                 //Create order from file and add to order queue
                 float totalCost = Storefront.SearchInventory(ordersToProcess[i].GetItem().GetName()).GetPrice() * Convert.ToInt32(ordersToProcess[i].GetQuantity());
 
                 Customer buyer = CustomerManager.FindCustomer(ordersToProcess[i].GetName());
 
+                /*
+                 * WORKER THREAD 1
+                 */
+
+                //Trace.WriteLine("I AT T1: " + i);
                 if (buyer == null)
                 {
                     //If first order was given
@@ -445,7 +444,7 @@ namespace Store
 
                         OrderManager.AddOrder(ordersToProcess[i], 1);
 
-                        if (i+1 < ordersToProcess.Count) //Increment loop to pass next order to different thread
+                        if (i+1 <= ordersToProcess.Count) //Increment loop to pass next order to different thread
                         {
                             i++;
                         }
@@ -457,31 +456,12 @@ namespace Store
                         {
                             OrderManager.ResetWorkerThread1(ordersToProcess[i]);
 
-                            if (i + 1 < ordersToProcess.Count) //Increment loop to pass next order to different thread
+                            if (i + 1 <= ordersToProcess.Count) //Increment loop to pass next order to different thread
                             {
                                 i++;
                             }
                         }
                     }
-
-                    //Keep track of process time
-                    if (_enableMultipleThreads)
-                    {
-                        if (timerThread.ThreadState == System.Threading.ThreadState.WaitSleepJoin) //If timer thread is sleeping
-                        {
-                            timerThread.Interrupt();
-                        }
-                        if (timerThreadStarted == false)
-                        {
-                            timerThread.Start(); //Tell timer thread to start
-                            timerThreadStarted = true;
-                        }
-                    }
-                    else
-                    {
-                        OrderProcessTimer.Start(); //Start the process timer
-                    }
-
                 }
                 else
                 {
@@ -493,7 +473,7 @@ namespace Store
                     {
                         OrderManager.AddOrder(ordersToProcess[i], 1);
 
-                        if (i + 1 < ordersToProcess.Count) //Increment loop to pass next order to different thread
+                        if (i + 1 <= ordersToProcess.Count) //Increment loop to pass next order to different thread
                         {
                             i++;
                         }
@@ -505,34 +485,18 @@ namespace Store
                         {
                             OrderManager.ResetWorkerThread1(ordersToProcess[i]);
 
-                            if (i + 1 < ordersToProcess.Count) //Increment loop to pass next order to different thread
+                            if (i + 1 <= ordersToProcess.Count) //Increment loop to pass next order to different thread
                             {
                                 i++;
                             }
                         }
                     }
-
-                    //Keep track of process time
-                    if (_enableMultipleThreads)
-                    {
-                        if (timerThread.ThreadState == System.Threading.ThreadState.WaitSleepJoin) //If timer thread is sleeping
-                        {
-                            timerThread.Interrupt();
-                        }
-                        if (timerThreadStarted == false)
-                        {
-                            timerThread.Start(); //Tell timer thread to start
-                            timerThreadStarted = true;
-                        }
-                    }
-                    else
-                    {
-                        OrderProcessTimer.Start(); //Start the process timer
-                    }
                 }
 
-                //Use worker thread 2
-
+                /*
+                 * WORKER THREAD 2
+                 */
+                //Trace.WriteLine("I AT T2: " + i);
                 Thread.Sleep(5); //Halt main thread for 5 ms to allow worker thread 1 to get initialized
 
                 //Create order from file and add to order queue
@@ -544,14 +508,30 @@ namespace Store
                     //If first order was given
                     if (OrderManager._createdWorkerThread2 == false)
                     {
-                        OrderManager.AddOrder(ordersToProcess[i], 1);
+                        if (i + 1 <= ordersToProcess.Count)
+                        {
+                            OrderManager.AddOrder(ordersToProcess[i], 2);
+                        }
+
+                        if (i + 1 <= ordersToProcess.Count) //Increment loop to pass next order to different thread
+                        {
+                            i++;
+                        }
                     }
                     else
                     {
                         //Check to see if worker thread 2 is busy
                         if (OrderManager._thread2OrderFinished == true) //Worker thread 2 is free
                         {
-                            OrderManager.ResetWorkerThread2(ordersToProcess[i]);
+                            if (i + 1 <= ordersToProcess.Count)
+                            {
+                                OrderManager.ResetWorkerThread2(ordersToProcess[i]);
+                            }
+                            
+                            if (i + 1 <= ordersToProcess.Count) //Increment loop to pass next order to different thread
+                            {
+                                i++;
+                            }
                         }
                     }
                 }
@@ -563,21 +543,174 @@ namespace Store
                     //If first order was given
                     if (OrderManager._createdWorkerThread2 == false)
                     {
-                        OrderManager.AddOrder(ordersToProcess[i], 2);
+                        if (i + 1 <= ordersToProcess.Count)
+                        {
+                            OrderManager.AddOrder(ordersToProcess[i], 2);
+                        }
+                        
+                        if (i + 1 <= ordersToProcess.Count) //Increment loop to pass next order to different thread
+                        {
+                            i++;
+                        }
                     }
                     else
                     {
-                        //Check to see if worker thread 1 is busy
-                        if (OrderManager._thread2OrderFinished == true) //Worker thread 1 is free
+                        //Check to see if worker thread 2 is busy
+                        if (OrderManager._thread2OrderFinished == true) //Worker thread 2 is free
                         {
-                            OrderManager.ResetWorkerThread2(ordersToProcess[i]);
+                            if (i + 1 <= ordersToProcess.Count)
+                            {
+                                OrderManager.ResetWorkerThread2(ordersToProcess[i]);
+                            }
+
+                            if (i + 1 <= ordersToProcess.Count) //Increment loop to pass next order to different thread
+                            {
+                                i++;
+                            }
+                        }
+                    }
+                }
+
+                /*
+                 * WORKER THREAD 3
+                 */
+
+                Thread.Sleep(5); //Halt main thread for 5 ms to allow worker thread 2 to get initialized
+
+                //Create order from file and add to order queue
+                totalCost = Storefront.SearchInventory(ordersToProcess[i].GetItem().GetName()).GetPrice() * Convert.ToInt32(ordersToProcess[i].GetQuantity());
+                buyer = CustomerManager.FindCustomer(ordersToProcess[i].GetName());
+                //Trace.WriteLine("I AT T3: " + i);
+                if (buyer == null)
+                {
+                    //If first order was given
+                    if (OrderManager._createdWorkerThread3 == false)
+                    {
+                        if (i + 1 <= ordersToProcess.Count)
+                        {
+                            OrderManager.AddOrder(ordersToProcess[i], 3);
+                        }
+
+                        if (i + 1 <= ordersToProcess.Count) //Increment loop to pass next order to different thread
+                        {
+                            i++;
+                        }
+                    }
+                    else
+                    {
+                        //Check to see if worker thread 3 is busy
+                        if (OrderManager._thread3OrderFinished == true) //Worker thread 3 is free
+                        {
+                            if (i + 1 <= ordersToProcess.Count)
+                            {
+                                OrderManager.ResetWorkerThread3(ordersToProcess[i]);
+                            }
+                            
+                            if (i + 1 <= ordersToProcess.Count) //Increment loop to pass next order to different thread
+                            {
+                                i++;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    //Obtain buyer's account history
+                    ordersToProcess[i].SetFunds(buyer.GetFunds());
+
+                    //If first order was given
+                    if (OrderManager._createdWorkerThread3 == false)
+                    {
+                        if (i + 1 <= ordersToProcess.Count)
+                        {
+                            OrderManager.AddOrder(ordersToProcess[i], 3);
+                        }
+
+                        if (i + 1 <= ordersToProcess.Count) //Increment loop to pass next order to different thread
+                        {
+                            i++;
+                        }
+                    }
+                    else
+                    {
+                        //Check to see if worker thread 3 is busy
+                        if (OrderManager._thread3OrderFinished == true) //Worker thread 3 is free
+                        {
+                            if (i + 1 <= ordersToProcess.Count)
+                            {
+                                OrderManager.ResetWorkerThread3(ordersToProcess[i]);
+                            }
+
+                            if (i + 1 <= ordersToProcess.Count) //Increment loop to pass next order to different thread
+                            {
+                                i++;
+                            }
+                        }
+                    }
+                }
+
+                /*
+                 * WORKER THREAD 4
+                 */
+
+                Thread.Sleep(5); //Halt main thread for 5 ms to allow worker thread 2 to get initialized
+
+                //Create order from file and add to order queue
+                totalCost = Storefront.SearchInventory(ordersToProcess[i].GetItem().GetName()).GetPrice() * Convert.ToInt32(ordersToProcess[i].GetQuantity());
+                buyer = CustomerManager.FindCustomer(ordersToProcess[i].GetName());
+
+                //Trace.WriteLine("I AT T4: " + i);
+                if (buyer == null)
+                {
+                    //If first order was given
+                    if (OrderManager._createdWorkerThread4 == false)
+                    {
+                        if (i + 1 <= ordersToProcess.Count)
+                        {
+                            OrderManager.AddOrder(ordersToProcess[i], 4);
+                        }
+                    }
+                    else
+                    {
+                        //Check to see if worker thread 4 is busy
+                        if (OrderManager._thread4OrderFinished == true) //Worker thread 4 is free
+                        {
+                            if (i + 1 <= ordersToProcess.Count)
+                            {
+                                OrderManager.ResetWorkerThread4(ordersToProcess[i]);
+                            }
+
+                        }
+                    }
+                }
+                else
+                {
+                    //Obtain buyer's account history
+                    ordersToProcess[i].SetFunds(buyer.GetFunds());
+
+                    //If first order was given
+                    if (OrderManager._createdWorkerThread4 == false)
+                    {
+                        if (i + 1 <= ordersToProcess.Count)
+                        {
+                            OrderManager.AddOrder(ordersToProcess[i], 4);
+                        }
+                    }
+                    else
+                    {
+                        //Check to see if worker thread 3 is busy
+                        if (OrderManager._thread4OrderFinished == true) //Worker thread 3 is free
+                        {
+                            if (i + 1 <= ordersToProcess.Count)
+                            {
+                                OrderManager.ResetWorkerThread4(ordersToProcess[i]);
+                            }
                         }
                     }
                 }
 
                 if (_enableMultipleThreads)
                 {
-                    StopMultiThreadedTimer();
                     UpdateOrders();
                     UpdateProcessedOrders();
                     UpdateStorefront();
@@ -590,12 +723,13 @@ namespace Store
             {
                 OrderManager.ResetWorkerThread1(null);
                 OrderManager.ResetWorkerThread2(null);
+                OrderManager.ResetWorkerThread3(null);
                 _finishedProcessingOrdersFile = true;
                 Thread.Sleep(5);
-                timerThread.Join();
             }
             OrderProcessTimer.Stop();
-            Trace.WriteLine("T1 completed: " + OrderManager.ordersBy1 + ". T2 completed: " + OrderManager.ordersBy2);
+            Trace.WriteLine("T1 completed: " + OrderManager.ordersBy1 + ". T2 completed: " + OrderManager.ordersBy2 + ". T3 completed: " + OrderManager.ordersBy3 + ". T4 completed: " + OrderManager.ordersBy4 + ".");
+            Trace.WriteLine("timer: " + OrderProcessTimer.ElapsedMilliseconds);
         }
 
         private List<Order> BuildOrdersFromFile(string path)
@@ -698,28 +832,6 @@ namespace Store
         public static bool GetMultiThreadingState()
         {
             return _enableMultipleThreads;
-        }
-
-        public void StartMultiThreadedTimer()
-        {
-            while (Thread.CurrentThread.Name == "TimerThread") //Keep timer thread spinning until all orders are processed
-            {
-                if (OrderManager.Thread1Executed == true)
-                {
-                    OrderProcessTimer.Stop();
-                    //Trace.WriteLine("TIMER THREAD FELL ASLEEP!");
-                }
-                else
-                {
-                    //Used to start timer by second worker thread to keep track of other worker thread speeds
-                    OrderProcessTimer.Start();
-                }
-                if (_finishedProcessingOrdersFile)
-                {
-                    break;
-                }
-            }
-
         }
 
         public void StopMultiThreadedTimer()
