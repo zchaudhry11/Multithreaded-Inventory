@@ -57,6 +57,11 @@ namespace Store
         {
             _usingMultithread = Main.GetMultiThreadingState(); //Check if multiple threads will be used
 
+            if (thread == 5) //If order is manually added process with main thread
+            {
+                _usingMultithread = false;
+            }
+
             if (_usingMultithread)
             {
                 Thread1Executed = false;
@@ -336,6 +341,7 @@ namespace Store
 
             if (_usingMultithread == false)
             {
+                Main.UpdateOrders();
                 Main.UpdateProcessedOrders();
                 Main.UpdateStorefront();
             }

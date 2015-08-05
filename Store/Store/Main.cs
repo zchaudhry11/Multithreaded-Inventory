@@ -834,6 +834,11 @@ namespace Store
             return _enableMultipleThreads;
         }
 
+        public static void SetMultiThreadingState(bool state)
+        {
+            _enableMultipleThreads = state;
+        }
+
         public void StopMultiThreadedTimer()
         {
             OrderProcessTimer.Stop();

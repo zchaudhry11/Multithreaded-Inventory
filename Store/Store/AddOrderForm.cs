@@ -32,6 +32,7 @@ namespace Store
             //If item in the order exists in the inventory
             if (purchasedItem != null)
             {
+                Main.SetMultiThreadingState(false);
                 int quantity = Convert.ToInt32(quantityBox.Text);
                 float totalCost = purchasedItem.GetPrice() * quantity; //Total cost of this order
 
@@ -45,7 +46,7 @@ namespace Store
                     CustomerManager.AddCustomer(new Customer(temp.GetName(), temp.GetFunds(), CustomerManager.CustomerID));
                 }
 
-                OrderManager.AddOrder(temp, 1); //Add order to list
+                OrderManager.AddOrder(temp, 5); //Add order to list
             }
 
             this.Close();
