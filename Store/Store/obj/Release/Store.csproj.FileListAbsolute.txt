@@ -1,0 +1,11 @@
+C:\Users\Zia\Documents\Visual Studio 2015\Projects\Store\Store\bin\Release\Store.exe.config
+C:\Users\Zia\Documents\Visual Studio 2015\Projects\Store\Store\bin\Release\Store.exe
+C:\Users\Zia\Documents\Visual Studio 2015\Projects\Store\Store\bin\Release\Store.pdb
+C:\Users\Zia\Documents\Visual Studio 2015\Projects\Store\Store\obj\Release\Store.csprojResolveAssemblyReference.cache
+C:\Users\Zia\Documents\Visual Studio 2015\Projects\Store\Store\obj\Release\Store.AddItemForm.resources
+C:\Users\Zia\Documents\Visual Studio 2015\Projects\Store\Store\obj\Release\Store.AddOrderForm.resources
+C:\Users\Zia\Documents\Visual Studio 2015\Projects\Store\Store\obj\Release\Store.Main.resources
+C:\Users\Zia\Documents\Visual Studio 2015\Projects\Store\Store\obj\Release\Store.Properties.Resources.resources
+C:\Users\Zia\Documents\Visual Studio 2015\Projects\Store\Store\obj\Release\Store.csproj.GenerateResource.Cache
+C:\Users\Zia\Documents\Visual Studio 2015\Projects\Store\Store\obj\Release\Store.exe
+C:\Users\Zia\Documents\Visual Studio 2015\Projects\Store\Store\obj\Release\Store.pdb
